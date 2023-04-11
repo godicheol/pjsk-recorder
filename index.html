@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index.html</title>
+    <link href="./jquery-select-areas/resources/jquery.selectareas.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="./src/micromodal.css" rel="stylesheet" type="text/css" />
+    <style>
+        *{
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #setting-container{
+            padding: 16px 8px;
+        }
+        #setting-container img{
+            width: 100%;
+            height: auto;
+        }
+        #result-table{
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        #result-table th, 
+        #result-table td{
+            padding: 2px 4px;
+            border: 1px solid;
+        }
+        #read-progress{
+            font-size: 0.8rem;
+        }
+        #music-list{
+            /* font-size: 0.8rem; */
+            
+            text-align: center;
+        }
+        #music-list th, 
+        #music-list td{
+            padding: 2px 4px;
+        }
+        .modal {
+            display: none;
+        }
+        .modal.is-open {
+            display: block;
+        }
+        #modal-2-image{
+            width: 100%;
+        }
+    </style>
+    
+</head>
+
+<body>
+    <!-- html -->
+    <img src="./img/examle.jpeg" height="128px;" alt="image">
+
+    <div style="color: #777;"><small>*Upload images like this.</small></div>
+
+    <br />
+
+    <input id="upload-input" type="file" accept="image/*" multiple>
+    <span id="read-progress"></span>
+    <div id="setting-container"></div>
+
+    <button id="end-button" onclick="endSelection()">Execute</button>
+    <button id="download-button" onclick="download()">Download</button>
+    <button onclick="showModal()">Music list</button>
+
+    <div class="modal micromodal-slide" id="modal-1" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
+                <main class="modal__content" id="modal-1-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Artist</th>
+                            </tr>
+                        </thead>
+                        <tbody id="music-list"></tbody>
+                    </table>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal micromodal-slide" id="modal-2" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
+                <main class="modal__content" id="modal-2-content">
+                    <img id="modal-2-image" src="" alt="image">
+                </main>
+            </div>
+        </div>
+    </div>    
+
+    <table id="result-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Difficulty</th>
+                <th>Level</th>
+                <th>Score</th>
+                <th>Point</th>
+                <th>Total</th>
+                <th>Combo</th>
+                <th>Cond.</th>
+                <th>P</th>
+                <th>G</th>
+                <th>G</th>
+                <th>B</th>
+                <th>M</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="result-list"></tbody>
+    </table>
+    <!-- js -->
+    <script src="./src/tesseract.min.js"></script>
+    <script src="./src/jquery.min.js"></script>
+    <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+    <script src="./jquery-select-areas/jquery.selectareas.min.js"></script>
+    <script src="./src/csv.min.js"></script>
+    <script src="./src/munjayeol.js"></script>
+    <script src="./src/musics.js"></script>
+    <script src="./src/musicDifficulties.js"></script>
+    <script>
+        const SCALE = {
+            // tested by iPhone12
+            // aspect ratio 2.16
+            iPhone: {
+                title: {
+                    x: 395 / 2532,
+                    y: 0 / 1170,
+                    w: 960 / 2532,
+                    h: 75 / 1170,
+                },
+                difficulty: {
+                    x: 400 / 2532,
+                    y: 80 / 1170,
+                    w: 200 / 2532,
+                    h: 60 / 1170,
+                },
+                score: {
+                    x: 300 / 2532,
+                    y: 280 / 1170,
+                    w: 620 / 2532,
+                    h: 183 / 1170,
+                },
+                combo: {
+                    x: 440 / 2532,
+                    y: 670 / 1170,
+                    w: 520 / 2532,
+                    h: 300 / 1170,
+                },
+                perfect: {
+                    x: 1170 / 2532,
+                    y: 668 / 1170,
+                    w: 160 / 2532,
+                    h: 60 / 1170,
+                },
+                great: {
+                    x: 1170 / 2532,
+                    y: 730 / 1170,
+                    w: 160 / 2532,
+                    h: 60 / 1170,
+                },
+                good: {
+                    x: 1170 / 2532,
+                    y: 793 / 1170,
+                    w: 160 / 2532,
+                    h: 60 / 1170,
+                },
+                bad: {
+                    x: 1170 / 2532,
+                    y: 846 / 1170,
+                    w: 160 / 2532,
+                    h: 60 / 1170,
+                },
+                miss: {
+                    x: 1170 / 2532,
+                    y: 897 / 1170,
+                    w: 160 / 2532,
+                    h: 60 / 1170,
+                }
+            },
+            // aspect ratio < 1.8
+            iPad: {
+                title: {
+                    x: 176 / 2208,
+                    y: 0 / 1242,
+                    w: 1020 / 2208,
+                    h: 72 / 1242,
+                },
+                difficulty: {
+                    x: 190 / 2208,
+                    y: 87 / 1242,
+                    w: 206 / 2208,
+                    h: 63 / 1242,
+                },
+                score: {
+                    x: 79 / 2208,
+                    y: 321 / 1242,
+                    w: 810 / 2208,
+                    h: 193 / 1242,
+                },
+                combo: {
+                    x: 226 / 2208,
+                    y: 738 / 1242,
+                    w: 586 / 2208,
+                    h: 316 / 1242,
+                },
+                perfect: {
+                    x: 1118 / 2208,
+                    y: 736 / 1242,
+                    w: 168 / 2208,
+                    h: 66 / 1242,
+                },
+                great: {
+                    x: 1118 / 2208,
+                    y: 800 / 1242,
+                    w: 168 / 2208,
+                    h: 66 / 1242,
+                },
+                good: {
+                    x: 1118 / 2208,
+                    y: 860 / 1242,
+                    w: 168 / 2208,
+                    h: 66 / 1242,
+                },
+                bad: {
+                    x: 1118 / 2208,
+                    y: 923 / 1242,
+                    w: 168 / 2208,
+                    h: 66 / 1242,
+                },
+                miss: {
+                    x: 1118 / 2208,
+                    y: 982 / 1242,
+                    w: 168 / 2208,
+                    h: 66 / 1242,
+                }
+            }
+        }
+        let files = [];
+        let selectionImg = null;
+        let selectedAreas = null;
+        let result = [];
+        let inProgress = false;
+
+        // tesseract
+        const { createWorker } = Tesseract;
+        const readText = async function(image, x, y, w, h) {
+            const worker = await createWorker();
+            await worker.loadLanguage('eng+jpn');
+            await worker.initialize('eng+jpn');
+            const { data: { text } } = await worker.recognize(image, {
+                rectangle: {
+                    top: y,
+                    left: x,
+                    width: w,
+                    height: h
+                },
+                tessedit_pageseg_mode: 5, // line
+            });
+            await worker.terminate();
+            return text;
+        }
+
+        const readDifficultyText = async function(image, x, y, w, h) {
+            const worker = await createWorker();
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            const { data: { text } } = await worker.recognize(image, {
+                rectangle: {
+                    top: y,
+                    left: x,
+                    width: w,
+                    height: h
+                },
+                tessedit_pageseg_mode: 6, // word
+                tessedit_char_whitelist: 'ADEHLMNOPRSTXY', // ADEHLMNOPRSTXY
+                // ABCDEFGHIJKLMNOPQRSTUVWXYZ
+            });
+            await worker.terminate();
+            return text;
+        }
+
+        const readDigits = async function(image, x, y, w, h) {
+            const worker = await createWorker();
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            const { data: { text } } = await worker.recognize(image, {
+                rectangle: {
+                    top: y,
+                    left: x,
+                    width: w,
+                    height: h
+                },
+                tessedit_pageseg_mode: 6, // word
+                tessedit_char_whitelist: '0123456789',
+            });
+            await worker.terminate();
+            return text;
+        }
+
+        // upload
+        const uploadInput = document.querySelector("#upload-input");
+        const container = document.querySelector("#setting-container");
+        const readProgress = document.querySelector("#read-progress");
+
+        uploadInput.addEventListener("change", async function(e) {
+            const _files = e.target.files;
+            if (_files.length < 1) {
+                return false;
+            }
+
+            setSelectArea(_files[0]);
+
+            for (var file of _files) {
+                files.push({
+                    isRead: false,
+                    isMatched: false,
+                    music: null,
+                    musicDiff: null,
+                    title: null,
+                    difficulty: null,
+                    level: 0,
+                    score: null,
+                    combo: null,
+                    condition: "MUSIC NOT FOUND",
+                    counts: null,
+                    file: file,
+                });
+            }
+        });
+
+        async function readAll() {
+            var i = 1;
+            for (var file of files) {
+                if (!file.isRead) {
+                    readProgress.innerHTML = "Reading...(" + i + " / " + files.length + ")";
+                    await readFile(file);
+                }
+                i++;
+            }
+            readProgress.innerHTML = "Reading completed!";
+        }
+
+        async function readFile(file) {
+            const image = await getImage(file.file);
+            const title = await readTitle(image);
+            const difficulty = await readDifficulty(image);
+            const score = await readScore(image);
+            const combo = await readCombo(image);
+            const counts = await readCounts(image);
+
+            file.isRead = true;
+            file.title = title;
+            file.difficulty = difficulty;
+            file.score = score;
+            file.combo = combo;
+            file.perfect = counts.perfect;
+            file.great = counts.great;
+            file.good = counts.good;
+            file.bad = counts.bad;
+            file.miss = counts.miss;
+            
+            return file;
+        }
+
+        async function getImage(file) {
+            return new Promise(async function(resolve, reject) {
+                var img = document.createElement("img");
+                img.onload = function() {
+                    resolve(img);
+                }
+                img.onerror = function(err) {
+                    reject(err);
+                }
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        function getSize(image) {
+            return {
+                width: image.width,
+                height: image.height,
+            }
+        }
+
+        function getOriginalSize(image) {
+            return {
+                width: image.naturalWidth || image.width,
+                height: image.naturalHeight || image.height,
+            }
+        }
+
+        function getArea(image, target) {
+            const {width, height} = getSize(image);
+            const aspectRatio = width / height;
+            let scale;
+            if (aspectRatio > 1.8) {
+                scale = SCALE["iPhone"][target];
+            } else {
+                scale = SCALE["iPad"][target];
+            }
+
+            return {
+                x: width * scale.x,
+                y: height * scale.y,
+                width: width * scale.w,
+                height: height * scale.h,
+            }
+        }
+
+        function calcSize(image, scale) {
+            const {width, height} = getOriginalSize(image);
+            const x = width * scale.x,
+                y = height * scale.y,
+                w = width * scale.w,
+                h = height * scale.h;
+            return [x, y, w, h];
+        }
+
+        async function readTitle(image) {
+            const res = await readText(image, ...selectedAreas[0]);
+            return res.replace(/\s/g, "");
+        }
+
+        async function readDifficulty(image) {
+            const res = await readDifficultyText(image, ...selectedAreas[1]);
+            return compareDifficulty(res);
+        }
+
+        async function readScore(image) {
+            const res = await readDigits(image, ...selectedAreas[2]);
+            return parseInt(res);
+        }
+
+        async function readCombo(image) {
+            const res = await readDigits(image, ...selectedAreas[3]);
+            return parseInt(res);
+        }
+
+        async function readCounts(image) {
+            const perfect = await readPerfect(image);
+            const great = await readGreat(image);
+            const good = await readGood(image);
+            const bad = await readBad(image);
+            const miss = await readMiss(image);
+            return {
+                perfect,
+                great,
+                good,
+                bad,
+                miss,
+            }
+        }
+
+        async function readPerfect(image) {
+            const res = await readDigits(image, ...selectedAreas[4]);
+            return parseInt(res);
+        }
+
+        async function readGreat(image) {
+            const res = await readDigits(image, ...selectedAreas[5]);
+            return parseInt(res);
+        }
+
+        async function readGood(image) {
+            const res = await readDigits(image, ...selectedAreas[6]);
+            return parseInt(res);
+        }
+
+        async function readBad(image) {
+            const res = await readDigits(image, ...selectedAreas[7]);
+            return parseInt(res);
+        }
+
+        async function readMiss(image) {
+            const res = await readDigits(image, ...selectedAreas[8]);
+            return parseInt(res);
+        }
+
+        // selectareas
+        function setSelectArea(file) {
+            selectionImg = document.createElement("img");
+            selectionImg.onload = function() {
+                const r1 = getArea(selectionImg, "title");
+                const r2 = getArea(selectionImg, "difficulty");
+                const r3 = getArea(selectionImg, "score");
+                const r4 = getArea(selectionImg, "combo");
+                const r5 = getArea(selectionImg, "perfect");
+                const r6 = getArea(selectionImg, "great");
+                const r7 = getArea(selectionImg, "good");
+                const r8 = getArea(selectionImg, "bad");
+                const r9 = getArea(selectionImg, "miss");
+
+                $(selectionImg).selectAreas({
+                    allowSelect: false,
+                    allowDelete: false,
+                    minSize: [10, 10],
+                    areas: [r1,r2,r3,r4,r5,r6,r7,r8,r9]
+                });
+            }
+            container.innerHTML = "";
+            container.appendChild(selectionImg);
+            selectionImg.src = URL.createObjectURL(file);
+        }
+        function destroySelection() {
+            if (selectionImg) {
+                $(selectionImg).selectAreas("destroy");
+            }
+            container.innerHTML = "";
+        }
+        async function endSelection() {
+            if (!selectionImg) {
+                console.error("Selection not found");
+                return false;
+            }
+            if (inProgress) {
+                console.error("Already in progress");
+                return false;
+            }
+            try {
+                inProgress = true;
+
+                // set selectareas
+                const areas = $(selectionImg).selectAreas("areas");
+                const scale = selectionImg.width / selectionImg.naturalWidth;
+                selectedAreas = areas.map(function(item) {
+                    return [
+                        item.x / scale,
+                        item.y / scale,
+                        item.width / scale,
+                        item.height / scale
+                    ];
+                });
+
+                // destroy selection
+                destroySelection();
+
+                // start read
+                await readAll();
+
+                // search music
+                searchAll();
+
+                // sort
+                sortFiles();
+
+                // end
+                renderResult();
+                container.innerHTML = "";
+            } catch(err) {
+                console.error(err);
+                alert("ERROR");
+            }
+        }
+
+        // munjayeol
+        function compareTitle(a, b) {
+            var res = munjayeol.parse(a, b);
+            var matches = res.reduce(function(prev, curr) {
+                if (!curr[0]) {
+                    return prev;
+                }
+                return prev + curr[1][2].length;
+            }, 0)
+            return matches / b.length;
+        }
+        function compareDifficulty(b) {
+            var arr = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"];
+            // ADEHLMNOPRSTXY
+            for (var a of arr) {
+                var res = munjayeol.parse(b, a);
+                var matches = res.reduce(function(prev, curr) {
+                    if (!curr[0]) {
+                        return prev;
+                    }
+                    return prev + curr[1][2].length;
+                }, 0)
+
+                if (matches / b.length >= 0.5) {
+                    return a;
+                }
+            }
+            return "ERROR";
+        }
+
+        function searchMusic(file) {
+            var maxAcc = 0,
+                music;
+            for (var item of musics) {
+                var acc = compareTitle(item.title, file.title);
+                if (acc > 0.6 && acc > maxAcc) {
+                    maxAcc = acc;
+                    music = item;
+                }
+            }
+
+            if (music) {
+                file.isMatched = true;
+                file.music = music;
+            } else {
+                file.isMatched = false;
+                file.music = null;
+            }
+        }
+
+        function searchDiff(file) {
+            const { isMatched, music, difficulty } = file;
+            if (!isMatched || !music) {
+                file.musicDiff = null;
+                return false;
+            }
+            const musicDiff = musicDifficulties.find(function(elem) {
+                return elem.musicId === music.id && 
+                    elem.musicDifficulty === difficulty.toLowerCase();
+            });
+            if (musicDiff) {
+                file.musicDiff = musicDiff;
+            } else {
+                file.musicDiff = null;
+            }
+        }
+
+        function setCondition(file) {
+            const {combo, perfect, great, good, bad, miss} = file;
+            if (file.musicDiff) {
+                const total = file.musicDiff.totalNoteCount;
+                if (perfect === total) {
+                    file.condition = "ALL PERFECT";
+                } else if (combo === total) {
+                    file.condition = "FULL COMBO";
+                } else if (combo > total) {
+                    file.condition = "COMBO ERROR";
+                } else if (perfect+great+good+bad+miss !== total) {
+                    file.condition = "COUNT ERROR";
+                }  else {
+                    file.condition = "LIVE CLEAR";
+                }
+            } else {
+                file.condition = "MUSIC NOT FOUND";
+            }
+        }
+
+        function searchAll() {
+            for (var file of files) {
+                const {isMatched} = file;
+                if (file.isMatched) {
+                    continue;
+                }
+                searchMusic(file);
+                searchDiff(file);
+                setCondition(file);
+            }
+        }
+
+        function getPoint(file) {
+            const {combo, perfect, great, good, bad, miss} = file;
+            let point = 0;
+            if (["COMBO ERROR", "COUNT ERROR", "MUSIC NOT FOUND"].indexOf(file.condition) < 0) {
+                // Project SEKAI Championship 2023 Spring rules
+                point += perfect * 3;
+                point += great * 2;
+                point += good * 1;
+                // point += bad * 0;
+                // point += miss * 0;
+            }
+            return point;
+        }
+
+        function getTitle(file) {
+            return file.music ? file.music.title : file.title;
+        }
+        function getArtist(file) {
+            return file.music ? file.music.creator : "?";
+        }
+        function getTotal(file) {
+            return file.musicDiff ? file.musicDiff.totalNoteCount : 0
+        }
+        function getLevel(file) {
+            return file.musicDiff ? file.musicDiff.playLevel : 0;
+        }
+
+        function sortFiles() {
+            files = files.sort(function(a, b) {
+                if (!a.music || !a.musicDiff) {
+                    return 1;
+                }
+                if (!b.music || !b.musicDiff) {
+                    return -1;
+                }
+                if (a.music.id === b.music.id) {
+                    if (a.musicDiff.playLevel === b.musicDiff.playLevel) {
+                        if (a.combo === b.combo) {
+                            return b.great - a.great;
+                        }
+                        return b.combo - a.combo;
+                    }
+                    return b.musicDiff.playLevel - a.musicDiff.playLevel;
+                } else {
+                    return a.music.id - b.music.id;
+                }
+                // deprecated
+                // if (b.level === a.level) {
+                //     if (b.combo === a.combo) {
+                //         if (b.perfect === a.perfect) {
+                //             return b.great - a.great;
+                //         }
+                //         return b.perfect - a.perfect;
+                //     }
+                //     return b.combo - a.combo;
+                // }
+                // return b.level - a.level;
+            });
+        }
+
+        // DOM
+        function renderResult() {
+            var target = document.querySelector("#result-list");
+            target.innerHTML = "";
+
+            let countTotal = {
+                level: 0,
+                score: 0,
+                point: 0,
+                total: 0,
+                combo: 0,
+                perfect: 0,
+                great: 0,
+                good: 0,
+                bad: 0,
+                miss: 0,
+            }
+
+            for (var i = 0; i < files.length; i++) {
+                const file = files[i];
+                const {isRead, isMatched, music, musicDiff, difficulty, score, combo, condition, perfect, great, good, bad, miss} = file;
+                const title = getTitle(file);
+                const artist = getArtist(file);
+                const total = getTotal(file);
+                const level = getLevel(file);
+                const point = getPoint(file);
+                var row = document.createElement("tr");
+                row.innerHTML += "<td><a href='javascript:void(0);' onclick='showModal2("+i+");'>" + title + "</a></td>";
+                row.innerHTML += "<td>" + artist + "</td>";
+                row.innerHTML += "<td>" + difficulty + "</td>";
+                row.innerHTML += "<td>" + level + "</td>";
+                row.innerHTML += "<td>" + score + "</td>";
+                row.innerHTML += "<td>" + point + "</td>";
+                row.innerHTML += "<td>" + total + "</td>";
+                row.innerHTML += "<td>" + combo + "</td>";
+                row.innerHTML += "<td>" + condition + "</td>";
+                row.innerHTML += "<td>" + perfect + "</td>";
+                row.innerHTML += "<td>" + great + "</td>";
+                row.innerHTML += "<td>" + good + "</td>";
+                row.innerHTML += "<td>" + bad + "</td>";
+                row.innerHTML += "<td>" + miss + "</td>";
+                row.innerHTML += "<td><a href='javascript:void(0);' onClick='startEdit("+i+");'>Edit</a></td>";
+                target.appendChild(row);
+
+                if (!isNaN(level)) { countTotal.level += level; }
+                if (!isNaN(score)) { countTotal.score += score; }
+                if (!isNaN(point)) { countTotal.point += point; }
+                if (!isNaN(total)) { countTotal.total += total; }
+                if (!isNaN(combo)) { countTotal.combo += combo; }
+                if (!isNaN(perfect)) { countTotal.perfect += perfect; }
+                if (!isNaN(great)) { countTotal.great += great; }
+                if (!isNaN(good)) { countTotal.good += good; }
+                if (!isNaN(bad)) { countTotal.bad += bad; }
+                if (!isNaN(miss)) { countTotal.miss += miss; }
+            }
+
+            var row = document.createElement("tr");
+            row.style.borderTop = "2px solid black";
+            row.innerHTML += "<td></td>";
+            row.innerHTML += "<td></td>";
+            row.innerHTML += "<td></td>";
+            row.innerHTML += "<td>" + countTotal.level + "</td>";
+            row.innerHTML += "<td>" + countTotal.score + "</td>";
+            row.innerHTML += "<td>" + countTotal.point + "</td>";
+            row.innerHTML += "<td>" + countTotal.total + "</td>";
+            row.innerHTML += "<td>" + countTotal.combo + "</td>";
+            row.innerHTML += "<td></td>";
+            row.innerHTML += "<td>" + countTotal.perfect + "</td>";
+            row.innerHTML += "<td>" + countTotal.great + "</td>";
+            row.innerHTML += "<td>" + countTotal.good + "</td>";
+            row.innerHTML += "<td>" + countTotal.bad + "</td>";
+            row.innerHTML += "<td>" + countTotal.miss + "</td>";
+            row.innerHTML += "<td></td>";
+            target.appendChild(row);
+
+            inProgress = false;
+        }
+
+        function startEdit(n) {
+            inProgress = true;
+            const file = files[n];
+            const {isRead, isMatched, title, difficulty, level, score, combo, perfect, great, good, bad, miss} = file;
+
+            file.isMatched = false;
+            file.title = window.prompt("Title", title) || title;
+            file.difficulty = window.prompt("Difficulty", difficulty) || difficulty;
+            file.score = parseInt(window.prompt("Score", score)) || 0;
+            file.combo = parseInt(window.prompt("Combo", combo)) || 0;
+            file.perfect = parseInt(window.prompt("Perfect", perfect)) || 0;
+            file.great = parseInt(window.prompt("Great", great)) || 0;
+            file.good = parseInt(window.prompt("Good", good)) || 0;
+            file.bad = parseInt(window.prompt("Bad", bad)) || 0;
+            file.miss = parseInt(window.prompt("Miss", miss)) || 0;
+            
+            searchMusic(file);
+            searchDiff(file);
+            setCondition(file);
+            sortFiles();
+            renderResult();
+        }
+
+        // download
+        function download() {
+            var header = ["title", "artist", "difficulty", "level", "score", "point", "total", "combo", "condition", "perfect", "great", "good", "bad", "miss"]
+            var data = files.map(function(item) {
+                return [
+                    getTitle(item),
+                    getArtist(item),
+                    item.difficulty,
+                    getLevel(item),
+                    item.score,
+                    getPoint(item),
+                    getTotal(item),
+                    item.combo,
+                    item.condition,
+                    item.perfect,
+                    item.great,
+                    item.good,
+                    item.bad,
+                    item.miss,
+                ];
+            });
+            var csv = new CSV(data, { header: header}).encode();
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+            element.setAttribute('download', "pjsk-recorder");
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        // list modal
+        MicroModal.init({
+            disableScroll: false,
+        });
+
+        function setModal1() {
+            const target = document.querySelector("#music-list");
+            musics.forEach(function(item) {
+                var html = "<tr>";
+                html += "<td>" + item.id + "</td>";
+                html += "<td>" + item.title + "</td>";
+                html += "<td>" + item.creator + "</td>";
+                html += "</tr>";
+                target.innerHTML += html;
+            });
+        }
+        function showModal() {
+            MicroModal.show("modal-1");
+        }
+        function closeModal() {
+            MicroModal.close("modal-1");
+        }
+        function showModal2(i) {
+            const target = document.querySelector("#modal-2-image");
+            target.src = URL.createObjectURL(files[i].file);
+            MicroModal.show("modal-2");
+        }
+        function closeModal2() {
+            const target = document.querySelector("#modal-2-image");
+            URL.revokeObjectURL(target.src);
+            MicroModal.close("modal-2");
+        }
+
+        setModal1();
+        
+    </script>
+</body>
+
+</html>
