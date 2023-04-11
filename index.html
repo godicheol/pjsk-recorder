@@ -664,14 +664,14 @@
             const {combo, perfect, great, good, bad, miss} = file;
             if (file.musicDiff) {
                 const total = file.musicDiff.totalNoteCount;
-                if (perfect === total) {
-                    file.condition = "ALL PERFECT";
-                } else if (combo === total) {
-                    file.condition = "FULL COMBO";
-                } else if (combo > total) {
+                if (combo > total) {
                     file.condition = "COMBO ERROR";
                 } else if (perfect+great+good+bad+miss !== total) {
                     file.condition = "COUNT ERROR";
+                } else if (perfect === total) {
+                    file.condition = "ALL PERFECT";
+                } else if (combo === total) {
+                    file.condition = "FULL COMBO";
                 }  else {
                     file.condition = "LIVE CLEAR";
                 }
