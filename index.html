@@ -12,7 +12,7 @@
             font-family: Arial, Helvetica, sans-serif;
         }
         #setting-container{
-            padding: 16px 8px;
+            padding: 8px 8px;
         }
         #setting-container img{
             width: 100%;
@@ -256,16 +256,16 @@
 
         // tesseract
         const { createWorker } = Tesseract;
-        const readText = async function(image, x, y, w, h) {
+        const readText = async function(image, pos) {
             const worker = await createWorker();
             await worker.loadLanguage('eng+jpn');
             await worker.initialize('eng+jpn');
             const { data: { text } } = await worker.recognize(image, {
                 rectangle: {
-                    top: y,
-                    left: x,
-                    width: w,
-                    height: h
+                    top: pos.y,
+                    left: pos.x,
+                    width: pos.width,
+                    height: pos.height
                 },
                 tessedit_pageseg_mode: 5, // line
             });
@@ -273,35 +273,34 @@
             return text;
         }
 
-        const readDifficultyText = async function(image, x, y, w, h) {
+        const readDifficultyText = async function(image, pos) {
             const worker = await createWorker();
             await worker.loadLanguage('eng');
             await worker.initialize('eng');
             const { data: { text } } = await worker.recognize(image, {
                 rectangle: {
-                    top: y,
-                    left: x,
-                    width: w,
-                    height: h
+                    top: pos.y,
+                    left: pos.x,
+                    width: pos.width,
+                    height: pos.height
                 },
                 tessedit_pageseg_mode: 6, // word
-                tessedit_char_whitelist: 'ADEHLMNOPRSTXY', // ADEHLMNOPRSTXY
-                // ABCDEFGHIJKLMNOPQRSTUVWXYZ
+                tessedit_char_whitelist: 'ADEHLMNOPRSTXY', 
             });
             await worker.terminate();
             return text;
         }
 
-        const readDigits = async function(image, x, y, w, h) {
+        const readDigits = async function(image, pos) {
             const worker = await createWorker();
             await worker.loadLanguage('eng');
             await worker.initialize('eng');
             const { data: { text } } = await worker.recognize(image, {
                 rectangle: {
-                    top: y,
-                    left: x,
-                    width: w,
-                    height: h
+                    top: pos.y,
+                    left: pos.x,
+                    width: pos.width,
+                    height: pos.height
                 },
                 tessedit_pageseg_mode: 6, // word
                 tessedit_char_whitelist: '0123456789',
@@ -342,6 +341,9 @@
         });
 
         async function readAll() {
+            if (!selectedAreas || selectedAreas.length !== 9) {
+                throw new Error("SelectedAreas not found");
+            }
             var i = 1;
             for (var file of files) {
                 if (!file.isRead) {
@@ -420,32 +422,36 @@
             }
         }
 
-        function calcSize(image, scale) {
-            const {width, height} = getOriginalSize(image);
-            const x = width * scale.x,
-                y = height * scale.y,
-                w = width * scale.w,
-                h = height * scale.h;
-            return [x, y, w, h];
+        function calcArea(image, selectedArea) {
+            return {
+                x: image.naturalWidth * selectedArea.x,
+                y: image.naturalHeight * selectedArea.y,
+                width: image.naturalWidth * selectedArea.width,
+                height: image.naturalHeight * selectedArea.height
+            };
         }
 
         async function readTitle(image) {
-            const res = await readText(image, ...selectedAreas[0]);
+            const area = calcArea(image, selectedAreas[0]);
+            const res = await readText(image, area);
             return res.replace(/\s/g, "");
         }
 
         async function readDifficulty(image) {
-            const res = await readDifficultyText(image, ...selectedAreas[1]);
+            const area = calcArea(image, selectedAreas[1]);
+            const res = await readDifficultyText(image, area);
             return compareDifficulty(res);
         }
 
         async function readScore(image) {
-            const res = await readDigits(image, ...selectedAreas[2]);
+            const area = calcArea(image, selectedAreas[2]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
         async function readCombo(image) {
-            const res = await readDigits(image, ...selectedAreas[3]);
+            const area = calcArea(image, selectedAreas[3]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
@@ -465,27 +471,32 @@
         }
 
         async function readPerfect(image) {
-            const res = await readDigits(image, ...selectedAreas[4]);
+            const area = calcArea(image, selectedAreas[4]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
         async function readGreat(image) {
-            const res = await readDigits(image, ...selectedAreas[5]);
+            const area = calcArea(image, selectedAreas[5]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
         async function readGood(image) {
-            const res = await readDigits(image, ...selectedAreas[6]);
+            const area = calcArea(image, selectedAreas[6]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
         async function readBad(image) {
-            const res = await readDigits(image, ...selectedAreas[7]);
+            const area = calcArea(image, selectedAreas[7]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
         async function readMiss(image) {
-            const res = await readDigits(image, ...selectedAreas[8]);
+            const area = calcArea(image, selectedAreas[8]);
+            const res = await readDigits(image, area);
             return parseInt(res);
         }
 
@@ -533,16 +544,7 @@
                 inProgress = true;
 
                 // set selectareas
-                const areas = $(selectionImg).selectAreas("areas");
-                const scale = selectionImg.width / selectionImg.naturalWidth;
-                selectedAreas = areas.map(function(item) {
-                    return [
-                        item.x / scale,
-                        item.y / scale,
-                        item.width / scale,
-                        item.height / scale
-                    ];
-                });
+                setSelectedAreas();
 
                 // destroy selection
                 destroySelection();
@@ -563,6 +565,18 @@
                 console.error(err);
                 alert("ERROR");
             }
+        }
+
+        function setSelectedAreas() {
+            const areas = $(selectionImg).selectAreas("areas");
+            selectedAreas = areas.map(function(item) {
+                return {
+                    x: item.x / selectionImg.width,
+                    y: item.y / selectionImg.height,
+                    width: item.width / selectionImg.width,
+                    height: item.height / selectionImg.height
+                };
+            });
         }
 
         // munjayeol
@@ -588,7 +602,7 @@
                     return prev + curr[1][2].length;
                 }, 0)
 
-                if (matches / b.length >= 0.5) {
+                if (matches / b.length > 0.5) {
                     return a;
                 }
             }
@@ -679,10 +693,10 @@
         }
 
         function getTitle(file) {
-            return file.music ? file.music.title : file.title;
+            return file.music ? file.music.title : "NOT FOUND";
         }
         function getArtist(file) {
-            return file.music ? file.music.creator : "?";
+            return file.music ? file.music.creator : "NOT FOUND";
         }
         function getTotal(file) {
             return file.musicDiff ? file.musicDiff.totalNoteCount : 0
