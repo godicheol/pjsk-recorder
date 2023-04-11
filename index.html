@@ -345,10 +345,14 @@
                     title: null,
                     difficulty: null,
                     level: 0,
-                    score: null,
-                    combo: null,
+                    score: 0,
+                    combo: 0,
                     condition: "MUSIC NOT FOUND",
-                    counts: null,
+                    perfect: 0,
+                    great: 0,
+                    good: 0,
+                    bad: 0,
+                    miss: 0,
                     file: file,
                 });
             }
@@ -427,7 +431,6 @@
             } else {
                 scale = SCALE["iPad"][target];
             }
-
             return {
                 x: width * scale.x,
                 y: height * scale.y,
@@ -672,7 +675,7 @@
                     file.condition = "ALL PERFECT";
                 } else if (combo === total) {
                     file.condition = "FULL COMBO";
-                }  else {
+                } else {
                     file.condition = "LIVE CLEAR";
                 }
             } else {
@@ -830,6 +833,14 @@
             inProgress = false;
         }
 
+        function getCount(str, origin) {
+            if (isNaN(parseInt(str))) {
+                return origin;
+            } else {
+                return parseInt(str);
+            }
+        }
+
         function startEdit(n) {
             inProgress = true;
             const file = files[n];
@@ -838,13 +849,17 @@
             file.isMatched = false;
             file.title = window.prompt("Title", title) || title;
             file.difficulty = window.prompt("Difficulty", difficulty) || difficulty;
-            file.score = parseInt(window.prompt("Score", score)) || 0;
-            file.combo = parseInt(window.prompt("Combo", combo)) || 0;
-            file.perfect = parseInt(window.prompt("Perfect", perfect)) || 0;
-            file.great = parseInt(window.prompt("Great", great)) || 0;
-            file.good = parseInt(window.prompt("Good", good)) || 0;
-            file.bad = parseInt(window.prompt("Bad", bad)) || 0;
-            file.miss = parseInt(window.prompt("Miss", miss)) || 0;
+            file.score = getCount(window.prompt("Score", score), score);
+            file.combo = getCount(window.prompt("Combo", combo), combo);
+            file.perfect = getCount(window.prompt("Perfect", perfect), perfect);
+            file.great = getCount(window.prompt("Great", great), great);
+            file.good = getCount(window.prompt("Good", good), good);
+            file.bad = getCount(window.prompt("Bad", bad), bad);
+            file.miss = getCount(window.prompt("Miss", miss), miss);
+            
+            if (["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].indexOf(file.difficulty) < 0) {
+                file.difficulty = "ERROR";
+            }
             
             searchMusic(file);
             searchDiff(file);
