@@ -605,7 +605,7 @@
                 }
                 return prev + curr[1][2].length;
             }, 0)
-            return matches / b.length;
+            return matches / Math.max(a.length, b.length);
         }
         function compareDifficulty(b) {
             var arr = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"];
@@ -617,8 +617,11 @@
                         return prev;
                     }
                     return prev + curr[1][2].length;
-                }, 0)
+                }, 0);
 
+                // if (matches / Math.max(a.length, b.length) > 0.5) {
+                //     return a;
+                // }
                 if (matches / b.length > 0.5) {
                     return a;
                 }
