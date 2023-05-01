@@ -14,6 +14,12 @@
         }
         html{
             font-size: 14px;
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            margin: 0;
+            padding: 8px;
         }
         #selection-wrapper img{
             width: 100%;
@@ -48,6 +54,11 @@
 </head>
 
 <body>
+    <!-- header -->
+
+    <div class="fw-9 fs-12 fc-15 bc-0 ta-c py-12" style="margin: -8px -8px 0 -8px;">
+        Project Sekai Recorder
+    </div>
 
     <!-- init container -->
     <div id="init-container">
@@ -97,42 +108,29 @@
 
     <!-- records -->
     <div id="record-container" style="display: none;">
-        <h3>Records</h3>
-        <div id="record-table"></div>
+        <h3>
+            Records
+        </h3>
         
-        <!-- download -->
-        <h3>Result</h3>
-        <div id="download-container" class="mt-8">
+        <div class="mb-8">
+            <button id="reset-button">Reset</button>
             <button id="download-button" type="button">Download</button>
         </div>
+
+        <div id="record-table"></div>
 
         <!-- chart -->
         <div id="chart-container">
             <h3>Chart</h3>
             <div>
                 <!-- chart type -->
-                
                 <select id="chart-draw-type">
-                    <optgroup label="Point">
-                        <option value="ap-div-point">ALL PERFECT</option>
-                        <option value="fc-div-point">FULL COMBO</option>
-                        <option value="lc-div-point">LIVE CLEAR</option>
-                    </optgroup>
-                    <optgroup label="Count">
-                        <option value="ap-div-count">ALL PERFECT</option>
-                        <option value="fc-div-count">FULL COMBO</option>
-                        <option value="lc-div-count">LIVE CLEAR</option>
-                    </optgroup>
-                    <optgroup label="Accumulate Point">
-                        <option value="ap-acc-point">ALL PERFECT</option>
-                        <option value="fc-acc-point">FULL COMBO</option>
-                        <option value="lc-acc-point">LIVE CLEAR</option>
-                    </optgroup>
-                    <optgroup label="Accumulate Count">
-                        <option value="ap-acc-count">ALL PERFECT</option>
-                        <option value="fc-acc-count">FULL COMBO</option>
-                        <option value="lc-acc-count">LIVE CLEAR</option>
-                    </optgroup>
+                    <option value="play-count">Play Count</option>
+                    <option value="play-acc-count">Accumulated Play Count</option>
+                    <option value="play-compeleteness">Play Compeleteness with Level filter</option>
+                    <option value="music-count">Number of clear musics</option>
+                    <option value="music-point">Music Point</option>
+                    <option value="point-compeleteness">Point Compeleteness with Level filter</option>
                 </select>
                 <button id="chart-draw-button" type="button">Draw</button>
             </div>
@@ -159,7 +157,7 @@
             </div>
 
             <!-- selection result -->
-            <div class="mt-12">
+            <div class="my-12">
                 <div id="selection-result-table"></div>
             </div>
         </div>
@@ -167,8 +165,8 @@
     </div>
 
     <!-- footer -->
-    <div class="py-12 ta-r">
-        <a href="https://github.com/godicheol/pjsk-recorder/">Git</a>
+    <div class="fc-15 bc-0 ta-r pr-12 py-12" style="margin: 0 -8px -8px -8px;">
+        <a class="fc-15" href="https://github.com/godicheol/pjsk-recorder/">Git</a>
     </div>
 
     <!-- js -->
@@ -235,7 +233,7 @@
         const selectionResultTable = document.querySelector("#selection-result-table");
         const recordContainer = document.querySelector("#record-container");
         const recordTable = document.querySelector("#record-table");
-        const downloadContainer = document.querySelector("#download-container");
+        const resetButton = document.querySelector("#reset-button");
         const downloadButton = document.querySelector("#download-button");
 
         const TITLE_CHARSET = getTitleCharSet();
@@ -486,6 +484,7 @@
         function endSelection() {
             if (selection) {
                 $(selection).selectAreas("destroy");
+                selection = null;
             }
             selectionWrapper.innerHTML = "";
         }
@@ -694,30 +693,43 @@
         }
         function getCondition(musicDiff, data) {
             const {combo, perfect, great, good, bad, miss} = data;
-            const total = musicDiff.totalNoteCount;
+            const totalNoteCount = musicDiff.totalNoteCount;
             if (!musicDiff) {
                 return "NOT FOUND";
-            } else if (combo > total) {
+            } else if (combo > totalNoteCount) {
                 return "COMBO ERROR";
-            } else if (perfect+great+good+bad+miss !== total) {
+            } else if (good+bad+miss === 0 && combo < perfect+great) {
+                return "COMBO ERROR";
+            } else if (perfect+great+good+bad+miss !== totalNoteCount) {
                 return "COUNT ERROR";
-            } else if (perfect === total) {
+            } else if (perfect === totalNoteCount) {
                 return "ALL PERFECT";
-            } else if (combo === total) {
+            } else if (combo === totalNoteCount) {
                 return "FULL COMBO";
             } else {
                 return "LIVE CLEAR";
             }
         }
         function isValidData(data) {
-            const {combo, perfect, great, good, bad, miss} = data;
-            const musicDiff = musicDifficulties.find(function(item) {
-                return item.id === data.mdid;
+            const {mid, mdid, combo, perfect, great, good, bad, miss} = data;
+            const music = musics.find(function(item) {
+                return item.id === mid;
             });
+            const musicDiff = musicDifficulties.find(function(item) {
+                return item.id === mdid;
+            });
+            if (!music) {
+                return false;
+            }
+            if (!musicDiff) {
+                return false;
+            }
             const totalNoteCount = musicDiff.totalNoteCount;
             if (!musicDiff) {
                 return false;
             } else if (combo > totalNoteCount) {
+                return false;
+            } else if (good+bad+miss === 0 && combo < perfect+great) {
                 return false;
             } else if (perfect+great+good+bad+miss !== totalNoteCount) {
                 return false;
@@ -808,9 +820,19 @@
                 updatedAt: new Date().getTime()
             });
         }
-        function getMusicTitleList() {
-            return musics.reduce(function(prev, curr) {
+        function getMusicTitleForEditorParams() {
+            return musics.sort(function(a,b) {
+                return a.seq - b.seq;
+            }).reduce(function(prev, curr) {
                 prev[curr.id] = curr.title;
+                return prev;
+            }, {});
+        }
+        function getMusicTitleForFilterParams() {
+            return musics.sort(function(a,b) {
+                return a.seq - b.seq;
+            }).reduce(function(prev, curr) {
+                prev[curr.title] = curr.title;
                 return prev;
             }, {});
         }
@@ -819,12 +841,11 @@
                 layout: "fitDataStretch",
                 layoutColumnsOnNewData: true,
                 columns: [
-                    {title: "#", field: "seq"},
                     {title: "Title", field: "title", editor: "list", editorParams: {
-                        values: getMusicTitleList()
-                    }, cellEdited: editTitleHandler},
-                    {title: "제목", field: "titleKr"},
-                    {title: "Artist", field: "composer"},
+                        values: getMusicTitleForEditorParams()
+                    }, cellEdited: editTitleHandler, headerSort: false},
+                    {title: "제목", field: "titleKr", headerSort: false},
+                    {title: "Artist", field: "composer", headerSort: false},
                     {title: "Difficulty", field: "difficulty", editor: "list", editorParams: {
                         values: {
                             "MASTER": "MASTER",
@@ -833,17 +854,17 @@
                             "NORMAL": "NORMAL",
                             "EASY": "EASY",
                         }
-                    }, cellEdited: editDifficultyHandler},
-                    {title: "Level", field: "playLevel"},
-                    {title: "Notes", field: "totalNoteCount"},
-                    {title: "Condition", field: "condition"},
-                    {title: "Score", field: "score", editor:"number", cellEdited: editHandler},
-                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler},
-                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler},
-                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler},
-                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler},
-                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler},
-                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler},
+                    }, cellEdited: editDifficultyHandler, headerSort: false},
+                    {title: "Level", field: "playLevel", headerSort: false},
+                    {title: "Notes", field: "totalNoteCount", headerSort: false},
+                    {title: "Condition", field: "condition", headerSort: false},
+                    {title: "Score", field: "score", editor:"number", cellEdited: editHandler, headerSort: false},
+                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler, headerSort: false},
+                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler, headerSort: false},
+                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler, headerSort: false},
+                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler, headerSort: false},
+                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler, headerSort: false},
+                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler, headerSort: false},
                 ]
             });
         }
@@ -870,6 +891,72 @@
             }).map(function(item) {
                 return convertToData(item);
             });
+            var minMaxFilterEditor = function(cell, onRendered, success, cancel, editorParams){
+                var end;
+                var container = document.createElement("span");
+                //create and style inputs
+                var start = document.createElement("input");
+                start.setAttribute("type", "number");
+                start.setAttribute("placeholder", "Min");
+                start.setAttribute("min", 0);
+                start.setAttribute("max", 100);
+                start.style.padding = "4px";
+                start.style.width = "50%";
+                start.style.boxSizing = "border-box";
+                start.value = cell.getValue();
+                function buildValues(){
+                    success({
+                        start:start.value,
+                        end:end.value,
+                    });
+                }
+                function keypress(e){
+                    if(e.keyCode == 13){
+                        buildValues();
+                    }
+
+                    if(e.keyCode == 27){
+                        cancel();
+                    }
+                }
+                end = start.cloneNode();
+                end.setAttribute("placeholder", "Max");
+
+                start.addEventListener("change", buildValues);
+                start.addEventListener("blur", buildValues);
+                start.addEventListener("keydown", keypress);
+                end.addEventListener("change", buildValues);
+                end.addEventListener("blur", buildValues);
+                end.addEventListener("keydown", keypress);
+                container.appendChild(start);
+                container.appendChild(end);
+
+                return container;
+                }
+
+            //custom max min filter function
+            function minMaxFilterFunction(headerValue, rowValue, rowData, filterParams){
+                //headerValue - the value of the header filter element
+                //rowValue - the value of the column in this row
+                //rowData - the data for the row being filtered
+                //filterParams - params object passed to the headerFilterFuncParams property
+
+                if(rowValue){
+                    if(headerValue.start != ""){
+                        if(headerValue.end != ""){
+                            return rowValue >= headerValue.start && rowValue <= headerValue.end;
+                        }else{
+                            return rowValue >= headerValue.start;
+                        }
+                    }else{
+                        if(headerValue.end != ""){
+                            return rowValue <= headerValue.end;
+                        }
+                    }
+                }
+
+                return true; //must return a boolean, true if it passes the filter.
+            }
             recordTabulator = new Tabulator("#record-table", {
                 data: _data,
                 layout: "fitDataStretch",
@@ -878,12 +965,11 @@
                     return setDateFormat(__data.timestamp);
                 },
                 columns: [
-                    {title: "#", field: "seq"},
                     {title: "Title", field: "title", editor: "list", editorParams: {
-                        values: getMusicTitleList()
-                    }, cellEdited: editTitleHandler},
-                    {title: "제목", field: "titleKr"},
-                    {title: "Artist", field: "composer"},
+                        values: getMusicTitleForEditorParams()
+                    }, cellEdited: editTitleHandler, headerFilter: "input", headerSort: false},
+                    {title: "제목", field: "titleKr", headerFilter: "input", headerSort: false},
+                    {title: "Artist", field: "composer", headerFilter: "input", headerSort: false},
                     {title: "Difficulty", field: "difficulty", editor: "list", editorParams: {
                         values: {
                             "MASTER": "MASTER",
@@ -892,19 +978,40 @@
                             "NORMAL": "NORMAL",
                             "EASY": "EASY",
                         }
-                    }, cellEdited: editDifficultyHandler},
-                    {title: "Level", field: "playLevel"},
-                    {title: "Notes", field: "totalNoteCount"},
-                    {title: "Condition", field: "condition"},
-                    {title: "Score", field: "score", editor:"number"},
-                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler},
-                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler},
-                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler},
-                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler},
-                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler},
-                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler},
+                    }, cellEdited: editDifficultyHandler, headerFilter: true, headerFilterParams: {
+                        values: {
+                            "MASTER": "MASTER",
+                            "EXPERT": "EXPERT",
+                            "HARD": "HARD",
+                            "NORMAL": "NORMAL",
+                            "EASY": "EASY",
+                        }
+                    }, headerSort: false},
+                    {title: "Level", field: "playLevel", width: 128, headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction, headerFilterLiveFilter:false, headerSort: false},
+                    {title: "Notes", field: "totalNoteCount", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Condition", field: "condition", headerFilter:"input", headerSort: false},
+                    {title: "Score", field: "score", editor:"number", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
                 ]
             });
+        }
+
+        function clearRecordTableSorting() {
+            if (recordTabulator) {
+                recordTabulator.clearSort();
+            }
+        }
+
+        function clearRecordTableFilter() {
+            if (recordTabulator) {
+                recordTabulator.clearFilter();
+                recordTabulator.clearHeaderFilter();
+            }
         }
 
         // 
@@ -990,7 +1097,7 @@
                     isInitialized = true;
                     destroy();
                     hideInitContainer();
-                    hideAdditionContainer();
+                    showAdditionContainer();
                     console.log("End initialized");
                 }
             }
@@ -1166,6 +1273,16 @@
             startEvent();
             if (selectionTabulator && recordTabulator) {
                 const data = selectionTabulator.getData();
+
+                // check
+                for (const item of data) {
+                    if (!isValidData(item)) {
+                        alert("Invalid data found.");
+                        endEvent();
+                        return false;
+                    }
+                }
+
                 recordTabulator.addData(data);
                 destroySelectionTabulator();
             }
@@ -1215,10 +1332,11 @@
                     }
                 });
 
+                // check values
                 for (const item of data) {
                     if (!isValidData(item)) {
-                        endEvent();
                         alert("Invalid data found.");
+                        endEvent();
                         return false;
                     }
                 }
@@ -1297,13 +1415,22 @@
             });
         }
 
+        function resetRecordTable() {
+            clearRecordTableFilter();
+            clearRecordTableSorting();
+        }
+
+        function resetHandler() {
+            resetRecordTable();
+        }
+
         uploadImagesInput.addEventListener("change", uploadImagesHandler);
-        uploadCSVInput.addEventListener("change", uploadCSVHandler)
+        uploadCSVInput.addEventListener("change", uploadCSVHandler);
         selectionReadButton.addEventListener("click", readHandler);
         selectionSaveButton.addEventListener("click", saveHandler);
         manualButton.addEventListener("click", startManualInitialize);
         downloadButton.addEventListener("click", downloadHandler);
-
+        resetButton.addEventListener("click", resetHandler);
 
         // 
         // chart
@@ -1361,16 +1488,48 @@
             function getCompletenessRate(data) {
                 return getPoint(data) / getMaxPoint(data);
             }
+            function compareRowData(a, b) {
+                if (a.completenessRate !== b.completenessRate) {
+                    return Math.sign(b.completenessRate - a.completenessRate);
+                } else if (a.perfectRate !== b.perfectRate) {
+                    return Math.sign(b.perfectRate - a.perfectRate);
+                } else if (a.greatRate !== b.greatRate) {
+                    return Math.sign(b.greatRate - a.greatRate);
+                } else if (a.goodRate !== b.goodRate) {
+                    return Math.sign(b.goodRate - a.goodRate);
+                } else if (a.badRate !== b.badRate) {
+                    return Math.sign(b.badRate - a.badRate);
+                } else if (a.missRate !== b.missRate) {
+                    return Math.sign(b.missRate - a.missRate);
+                } else {
+                    return Math.sign(a.createdAt - b.createdAt);
+                }
+            }
+            function getMusicDiffs() {
+                const levelFilter = recordTabulator.getFilters(true).find(function(item) {
+                    return item.field === "playLevel";
+                });
+
+                let minLevel = 0;
+                let maxLevel = Number.POSITIVE_INFINITY;
+                if (levelFilter) {
+                    if (!isNaN(parseInt(levelFilter.value.start))) {
+                        minLevel = parseInt(levelFilter.value.start);
+                    }
+                    if (!isNaN(parseInt(levelFilter.value.end))) {
+                        maxLevel = parseInt(levelFilter.value.end);
+                    }
+                }
+                return musicDifficulties.filter(function(item) {
+                    return item.playLevel >= minLevel && item.playLevel <= maxLevel;
+                });
+            }
             function getData() {
-                return recordTabulator.getRows().map(function(row) {
+                return recordTabulator.getRows("active").map(function(row) {
                     const data = convertToData(row.getData());
                     const group = row.getGroup().getKey();
-                    const arr = group.split("-");
                     return Object.assign(data, {
                         group: group,
-                        year: parseInt(arr[0]),
-                        month: parseInt(arr[1]),
-                        day: parseInt(arr[2]),
                         maxPoint: getMaxPoint(data),
                         point: getPoint(data),
                         comboRate: getComboRate(data),
@@ -1384,30 +1543,64 @@
                 });
             }
             function getGroupData() {
-                return recordTabulator.getGroups().map(function(group) {
-                    const _group = group.getKey();
-                    const arr = _group.split("-");
-                    const data = group.getRows().map(function(row) {
-                        const _data = convertToData(row.getData());
-                        return Object.assign(_data, {
-                            maxPoint: getMaxPoint(_data),
-                            point: getPoint(_data),
-                            perfectRate: getPerfectRate(_data),
-                            greatRate: getGreatRate(_data),
-                            goodRate: getGoodRate(_data),
-                            badRate: getBadRate(_data),
-                            missRate: getMissRate(_data),
-                            completenessRate: getCompletenessRate(_data),
-                        })
-                    });
-                    return {
-                        group: _group,
-                        year: parseInt(arr[0]),
-                        month: parseInt(arr[1]),
-                        day: parseInt(arr[2]),
-                        data: data,
+                return Object.entries(getData().reduce(function(prev, curr) {
+                    if (!prev[curr.group]) {
+                        prev[curr.group] = [];
                     }
-                });
+                    prev[curr.group].push(curr);
+                    return prev;
+                }, {})).reduce(function(prev, [key, value]) {
+                    prev.push({
+                        group: key,
+                        data: value,
+                    });
+                    return prev;
+                }, []);
+            }
+            function getUniqueData() {
+                return recordTabulator.getRows("active").map(function(row) {
+                    const data = convertToData(row.getData());
+                    const group = row.getGroup().getKey();
+                    return Object.assign(data, {
+                        group: group,
+                        maxPoint: getMaxPoint(data),
+                        point: getPoint(data),
+                        comboRate: getComboRate(data),
+                        perfectRate: getPerfectRate(data),
+                        greatRate: getGreatRate(data),
+                        goodRate: getGoodRate(data),
+                        badRate: getBadRate(data),
+                        missRate: getMissRate(data),
+                        completenessRate: getCompletenessRate(data),
+                    });
+                }).reduce(function(prev, curr) {
+                    const i = prev.findIndex(function(item) {
+                        return item.mid === curr.mid;
+                    });
+                    if (i > -1) {
+                        if (compareRowData(prev[i], curr) > 0) {
+                            prev[i] = curr;
+                        }
+                    } else {
+                        prev.push(curr);
+                    }
+                    return prev;
+                }, []);
+            }
+            function getUniqueGroupData() {
+                return Object.entries(getUniqueData().reduce(function(prev, curr) {
+                    if (!prev[curr.group]) {
+                        prev[curr.group] = [];
+                    }
+                    prev[curr.group].push(curr);
+                    return prev;
+                }, {})).reduce(function(prev, [key, value]) {
+                    prev.push({
+                        group: key,
+                        data: value,
+                    });
+                    return prev;
+                }, []);
             }
             function getAccumulatedGroupData() {
                 return getGroupData().reduce(function(prev, curr, index, array) {
@@ -1418,38 +1611,38 @@
                     }).reduce(function(_prev, _curr) {
                         return _prev.concat(_curr);
                     }, []);
-
                     prev.push({
                         group: curr.group,
-                        year: curr.year,
-                        month: curr.month,
-                        day: curr.day,
                         data: data
                     });
-
+                    return prev;
+                }, []);
+            }
+            function getAccumulatedUniqueGroupData() {
+                return getUniqueGroupData().reduce(function(prev, curr, index, array) {
+                    const data = array.filter(function(item) {
+                        return new Date(item.group).getTime() <= new Date(curr.group).getTime();
+                    }).map(function(item) {
+                        return item.data;
+                    }).reduce(function(_prev, _curr) {
+                        return _prev.concat(_curr);
+                    }, []);
+                    prev.push({
+                        group: curr.group,
+                        data: data
+                    });
                     return prev;
                 }, []);
             }
 
-            function drawChart(type, func) {
-                const data = getGroupData();
+            function drawPlayCountChart(acc) {
+                const data = acc ? getAccumulatedGroupData() : getGroupData();
                 const COLORS = {
                     "MASTER": "#9400D3",
                     "EXPERT": "#DC143C",
                     "HARD": "#FF8C00",
                     "NORMAL": "#00CED1",
                     "EASY": "#32CD32",
-                }
-                const getValue = function(_data) {
-                    if (type === "count") {
-                        return _data.length;
-                    } else if (type === "point") {
-                        return _data.reduce(function(p,c) {
-                            return p + c.point;
-                        }, 0);
-                    } else {
-                        throw new Error("Invalid argument type");
-                    }
                 }
                 drawnChart = new Chart(
                     chartCanvas,
@@ -1461,11 +1654,9 @@
                                 {
                                     label: 'MASTER',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "MASTER" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.MASTER,
@@ -1475,11 +1666,9 @@
                                 {
                                     label: 'EXPERT',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "EXPERT" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.EXPERT,
@@ -1489,11 +1678,9 @@
                                 {
                                     label: 'HARD',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "HARD" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.HARD,
@@ -1503,11 +1690,9 @@
                                 {
                                     label: 'NORMAL',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "NORMAL" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.NORMAL,
@@ -1517,11 +1702,9 @@
                                 {
                                     label: 'EASY',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "EASY" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.EASY,
@@ -1534,25 +1717,14 @@
                 )
             }
 
-            function drawAccumulateChart(type, func) {
-                const data = getAccumulatedGroupData();
+            function drawMusicCountChart() {
+                const data = getAccumulatedUniqueGroupData();
                 const COLORS = {
                     "MASTER": "#9400D3",
                     "EXPERT": "#DC143C",
                     "HARD": "#FF8C00",
                     "NORMAL": "#00CED1",
                     "EASY": "#32CD32",
-                }
-                const getValue = function(_data) {
-                    if (type === "count") {
-                        return _data.length;
-                    } else if (type === "point") {
-                        return _data.reduce(function(p,c) {
-                            return p + c.point;
-                        }, 0);
-                    } else {
-                        throw new Error("Invalid argument type");
-                    }
                 }
                 drawnChart = new Chart(
                     chartCanvas,
@@ -1564,11 +1736,9 @@
                                 {
                                     label: 'MASTER',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "MASTER" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.MASTER,
@@ -1578,11 +1748,9 @@
                                 {
                                     label: 'EXPERT',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "EXPERT" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.EXPERT,
@@ -1592,11 +1760,9 @@
                                 {
                                     label: 'HARD',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "HARD" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.HARD,
@@ -1606,11 +1772,9 @@
                                 {
                                     label: 'NORMAL',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "NORMAL" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.NORMAL,
@@ -1620,11 +1784,9 @@
                                 {
                                     label: 'EASY',
                                     data: data.map(function(item) {
-                                        const filteredData = item.data.filter(function(_item) {
-                                            return _item.difficulty === "EASY" && (func ? func(_item) : true);
-                                        });
-
-                                        return getValue(filteredData);
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY";
+                                        }).length;
                                     }), // y
                                     fill: false,
                                     borderColor: COLORS.EASY,
@@ -1637,6 +1799,331 @@
                 )
             }
 
+            function drawMusicPointChart() {
+                const data = getAccumulatedUniqueGroupData();
+                const COLORS = {
+                    "MASTER": "#9400D3",
+                    "EXPERT": "#DC143C",
+                    "HARD": "#FF8C00",
+                    "NORMAL": "#00CED1",
+                    "EASY": "#32CD32",
+                }
+                drawnChart = new Chart(
+                    chartCanvas,
+                    {
+                        type: 'line',
+                        data: {
+                            labels: data.map(x => x.group), // x
+                            datasets: [
+                                {
+                                    label: 'MASTER',
+                                    data: data.map(function(item) {
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.MASTER,
+                                    pointBackgroundColor: COLORS.MASTER,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EXPERT',
+                                    data: data.map(function(item) {
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EXPERT,
+                                    pointBackgroundColor: COLORS.EXPERT,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'HARD',
+                                    data: data.map(function(item) {
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.HARD,
+                                    pointBackgroundColor: COLORS.HARD,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'NORMAL',
+                                    data: data.map(function(item) {
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.NORMAL,
+                                    pointBackgroundColor: COLORS.NORMAL,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EASY',
+                                    data: data.map(function(item) {
+                                        return item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EASY,
+                                    pointBackgroundColor: COLORS.EASY,
+                                    tension: 0,
+                                },
+                            ]
+                        }
+                    }
+                )
+            }
+            function drawPointCompletenessChart() {
+                const data = getAccumulatedUniqueGroupData();
+                const max = getMusicDiffs().reduce(function(prev, curr) {
+                    const d = curr.musicDifficulty.toUpperCase();
+                    const n = curr.totalNoteCount;
+                    prev[d] += n * 3;
+                    return prev;
+                }, {
+                    MASTER: 0,
+                    EXPERT: 0,
+                    HARD: 0,
+                    NORMAL: 0,
+                    EASY: 0,
+                });
+
+                const COLORS = {
+                    "MASTER": "#9400D3",
+                    "EXPERT": "#DC143C",
+                    "HARD": "#FF8C00",
+                    "NORMAL": "#00CED1",
+                    "EASY": "#32CD32",
+                }
+                drawnChart = new Chart(
+                    chartCanvas,
+                    {
+                        type: 'line',
+                        options: {
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    max: 100
+                                }
+                            }
+                        },
+                        data: {
+                            labels: data.map(x => x.group), // x
+                            datasets: [
+                                {
+                                    label: 'MASTER',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0) / max.MASTER;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.MASTER,
+                                    pointBackgroundColor: COLORS.MASTER,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EXPERT',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0) / max.EXPERT;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EXPERT,
+                                    pointBackgroundColor: COLORS.EXPERT,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'HARD',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0) / max.HARD;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.HARD,
+                                    pointBackgroundColor: COLORS.HARD,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'NORMAL',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0) / max.NORMAL;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.NORMAL,
+                                    pointBackgroundColor: COLORS.NORMAL,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EASY',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY";
+                                        }).reduce(function(p, c) {
+                                            return p + c.point;
+                                        }, 0) / max.EASY;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EASY,
+                                    pointBackgroundColor: COLORS.EASY,
+                                    tension: 0,
+                                },
+                            ]
+                        }
+                    }
+                )
+            }
+            
+            function drawPlayCompletenessChart() {
+                const data = getAccumulatedUniqueGroupData();
+                const max = getMusicDiffs().reduce(function(prev, curr) {
+                    const d = curr.musicDifficulty.toUpperCase();
+                    prev[d] += 1;
+                    return prev;
+                }, {
+                    MASTER: 0,
+                    EXPERT: 0,
+                    HARD: 0,
+                    NORMAL: 0,
+                    EASY: 0,
+                });
+
+                const COLORS = {
+                    "MASTER": "#9400D3",
+                    "EXPERT": "#DC143C",
+                    "HARD": "#FF8C00",
+                    "NORMAL": "#00CED1",
+                    "EASY": "#32CD32",
+                }
+                drawnChart = new Chart(
+                    chartCanvas,
+                    {
+                        type: 'line',
+                        options: {
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    max: 100
+                                }
+                            }
+                        },
+                        data: {
+                            labels: data.map(x => x.group), // x
+                            datasets: [
+                                {
+                                    label: 'MASTER',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER";
+                                        }).length / max.MASTER;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.MASTER,
+                                    pointBackgroundColor: COLORS.MASTER,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EXPERT',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT";
+                                        }).length / max.EXPERT;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EXPERT,
+                                    pointBackgroundColor: COLORS.EXPERT,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'HARD',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD";
+                                        }).length / max.HARD;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.HARD,
+                                    pointBackgroundColor: COLORS.HARD,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'NORMAL',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL";
+                                        }).length / max.NORMAL;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.NORMAL,
+                                    pointBackgroundColor: COLORS.NORMAL,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EASY',
+                                    data: data.map(function(item) {
+                                        const res = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY";
+                                        }).length / max.EASY;
+
+                                        return Math.round(res * 10000) / 100;
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EASY,
+                                    pointBackgroundColor: COLORS.EASY,
+                                    tension: 0,
+                                },
+                            ]
+                        }
+                    }
+                )
+            }
 
             function chartDrawHandler(e) {
                 startEvent();
@@ -1646,20 +2133,22 @@
                 }
                 const type = chartDrawType.value;
 
-                switch(type) {
-                    case "lc-acc-point": drawAccumulateChart("point"); break;
-                    case "fc-acc-point": drawAccumulateChart("point", item => item.comboRate === 1); break;
-                    case "ap-acc-point": drawAccumulateChart("point", item => item.perfectRate === 1); break;
-                    case "lc-acc-count": drawAccumulateChart("count"); break;
-                    case "fc-acc-count": drawAccumulateChart("count", item => item.comboRate === 1); break;
-                    case "ap-acc-count": drawAccumulateChart("count", item => item.perfectRate === 1); break;
+                // check values
+                for (const item of recordTabulator.getData()) {
+                    if (!isValidData(item)) {
+                        alert("Invalid data found.");
+                        endEvent();
+                        return false;
+                    }
+                }
 
-                    case "lc-div-point": drawChart("point"); break;
-                    case "fc-div-point": drawChart("point", item => item.comboRate === 1); break;
-                    case "ap-div-point": drawChart("point", item => item.perfectRate === 1); break;
-                    case "lc-div-count": drawChart("count"); break;
-                    case "fc-div-count": drawChart("count", item => item.comboRate === 1); break;
-                    case "ap-div-count": drawChart("count", item => item.perfectRate === 1); break;
+                switch(type) {
+                    case "play-count": drawPlayCountChart(); break;
+                    case "play-acc-count": drawPlayCountChart(true); break;
+                    case "play-compeleteness": drawPlayCompletenessChart(); break;
+                    case "music-count": drawMusicCountChart(); break;
+                    case "music-point": drawMusicPointChart(); break;
+                    case "point-compeleteness": drawPointCompletenessChart(); break;
                 }
 
                 show();
