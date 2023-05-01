@@ -127,27 +127,14 @@
                 <select id="chart-draw-type">
                     <option value="play-count">Play Count</option>
                     <option value="play-count-acc">Accumulated Play Count</option>
-
-                    <option value="compeleteness">Compeleteness with Level filter</option>
-
-                    <option value="total-clear">Total Clear</option>
-
-                    <option value="music-count">Number of clear musics</option>
-                    <option value="music-point">Music Point</option>
-
-                    <optgroup label="Count">
-                        <option value="count-perfect">Perfect</option>
-                        <option value="count-great">Great</option>
-                        <option value="count-good">Good</option>
-                        <option value="count-bad">Bad</option>
-                        <option value="count-miss">Miss</option>
-                    </optgroup>
-
+                    <option value="compeleteness">Compeleteness</option>
+                    <option value="clear-count">Cleared Music Count</option>
+                    <option value="combo-count">Combo Count</option>
                 </select>
                 <button id="chart-draw-button" type="button">Draw</button>
             </div>
-            <div id="chart-wrapper" style="display: none;">
-                <canvas id="chart-canvas"></canvas>
+            <div id="chart-wrapper">
+                <canvas id="chart-canvas" width="0" height="0"></canvas>
             </div>
         </div>
 
@@ -1469,13 +1456,6 @@
 
             let drawnChart;
 
-            function show() {
-                chartWrapper.style.display = "";
-            }
-            function hide() {
-                chartWrapper.style.display = "none";
-            }
-
             function getPoint(data) {
                 // Project SEKAI Championship 2023 Spring rules
                 const {combo, perfect, great, good, bad, miss} = data;
@@ -1531,6 +1511,7 @@
                     return Math.sign(a.createdAt - b.createdAt);
                 }
             }
+
             function getMusicDiffs() {
                 const levelFilter = recordTabulator.getFilters(true).find(function(item) {
                     return item.field === "playLevel";
@@ -1777,7 +1758,7 @@
                 }
             }
 
-            function getDifficultyDatasets(data, extractFunc) {
+            function getDiffDatasets(data, extractFunc, fill) {
                 return ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(difficulty) {
                     return {
                         label: difficulty,
@@ -1792,47 +1773,80 @@
                         pointBackgroundColor: DIFFICULTY_COLORS[difficulty],
                         tension: 0,
                     }
-                });
-            } 
+                })
+            }
             
-            function drawChart(type, labels, datasets, options) {
+            function drawChart(type, data, options) {
                 drawnChart = new Chart(
                     chartCanvas,
                     {
                         type: type,
+                        data: data,
                         options: options,
-                        data: {
-                            labels: labels, // x
-                            datasets: datasets
-                        }
                     }
                 )
             }
 
-            function drawPlayCountChart(acc) {
+            function drawPlayCountChart() {
                 const data = getGroupData();
+                const labels = data.map(x => x.group);
+                const datasets = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(difficulty) {
+                    return {
+                        label: difficulty,
+                        data: data.map(function(item) {
+                            const filtered = item.data.filter(function(_item) {
+                                return _item.difficulty === difficulty;
+                            });
+                            return filtered.length
+                        }),
+                        backgroundColor: data.map(function(item) {
+                            return DIFFICULTY_COLORS[difficulty]
+                        }),
+                    }
+                })
                 
                 drawChart(
-                    "line",
-                    data.map(x => x.group), // x
-                    getDifficultyDatasets(data, function(items) {
-                        return items.length;
-                    }),
+                    "bar",
                     {
-                        interation: INTERACTION_NEAREST
+                        labels: labels, // x
+                        datasets: datasets,
+                        backgroundColor: Object.values(DIFFICULTY_COLORS),
+                    },
+                    {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                            }
+                        },
                     },
                 )
             }
 
             function drawPlayCountAccChart(acc) {
                 const data = getAccumulatedGroupData();
-                
+                const labels = data.map(x => x.group);
+                const datasets = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(difficulty) {
+                    return {
+                        label: difficulty,
+                        data: data.map(function(item) {
+                            const filtered = item.data.filter(function(_item) {
+                                return _item.difficulty === difficulty;
+                            });
+                            return filtered.length;
+                        }),
+                        fill: false,
+                        borderColor: DIFFICULTY_COLORS[difficulty],
+                        pointBackgroundColor: DIFFICULTY_COLORS[difficulty],
+                        tension: 0,
+                    }
+                })
+
                 drawChart(
                     "line",
-                    data.map(x => x.group), // x
-                    getDifficultyDatasets(data, function(items) {
-                        return items.length;
-                    }),
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
                     {
                         interation: INTERACTION_NEAREST
                     },
@@ -1842,303 +1856,91 @@
             function drawCompletenessRateChart() {
                 const data = getAccumulatedUniqueDiffGroupData();
                 const max = getMusicDiffsPoint();
+                const labels = data.map(x => x.group);
+                const datasets = getDiffDatasets(data, function(items, diff) {
+                    return Math.round(items.reduce(function(p, c) {
+                        return p + c.point;
+                    }, 0) / max[diff] * 10000) / 100;
+                });
 
                 drawChart(
                     "line",
-                    data.map(x => x.group), // x
-                    getDifficultyDatasets(data, function(items, diff) {
-                        return Math.round(items.reduce(function(p, c) {
-                            return p + c.point;
-                        }, 0) / max[diff] * 10000) / 100;
-                    }),
                     {
-                        scales: SCALES_0_100
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        interation: INTERACTION_NEAREST,
+                        scales: SCALES_0_100,
                     },
                 )
             }
 
-            function drawMusicCountChart() {
+            function drawClearCountChart() {
                 const data = getAccumulatedUniqueGroupData();
-                const COLORS = {
-                    "MASTER": "#9400D3",
-                    "EXPERT": "#DC143C",
-                    "HARD": "#FF8C00",
-                    "NORMAL": "#00CED1",
-                    "EASY": "#32CD32",
-                }
-                drawnChart = new Chart(
-                    chartCanvas,
-                    {
-                        type: 'line',
-                        options: {
-                            interaction: {
-                                intersect: false,
-                                mode: 'nearest',
-                                axis: "xy"
-                            }
-                        },
-                        data: {
-                            labels: data.map(x => x.group), // x
-                            datasets: [
-                                {
-                                    label: 'MASTER',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "MASTER";
-                                        }).length;
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.MASTER,
-                                    pointBackgroundColor: COLORS.MASTER
-                                },
-                                {
-                                    label: 'EXPERT',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "EXPERT";
-                                        }).length;
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.EXPERT,
-                                    pointBackgroundColor: COLORS.EXPERT
-                                },
-                                {
-                                    label: 'HARD',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "HARD";
-                                        }).length;
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.HARD,
-                                    pointBackgroundColor: COLORS.HARD
-                                },
-                                {
-                                    label: 'NORMAL',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "NORMAL";
-                                        }).length;
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.NORMAL,
-                                    pointBackgroundColor: COLORS.NORMAL
-                                },
-                                {
-                                    label: 'EASY',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "EASY";
-                                        }).length;
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.EASY,
-                                    pointBackgroundColor: COLORS.EASY
-                                },
-                            ]
-                        }
-                    }
-                )
-            }
-
-            function drawMusicPointChart() {
-                
-                const data = getAccumulatedUniqueGroupData();
-                const COLORS = {
-                    "MASTER": "#9400D3",
-                    "EXPERT": "#DC143C",
-                    "HARD": "#FF8C00",
-                    "NORMAL": "#00CED1",
-                    "EASY": "#32CD32",
-                }
-                drawnChart = new Chart(
-                    chartCanvas,
-                    {
-                        type: 'line',
-                        data: {
-                            labels: data.map(x => x.group), // x
-                            datasets: [
-                                {
-                                    label: 'MASTER',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "MASTER";
-                                        }).reduce(function(p, c) {
-                                            return p + c.point;
-                                        }, 0);
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.MASTER,
-                                    pointBackgroundColor: COLORS.MASTER
-                                },
-                                {
-                                    label: 'EXPERT',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "EXPERT";
-                                        }).reduce(function(p, c) {
-                                            return p + c.point;
-                                        }, 0);
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.EXPERT,
-                                    pointBackgroundColor: COLORS.EXPERT
-                                },
-                                {
-                                    label: 'HARD',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "HARD";
-                                        }).reduce(function(p, c) {
-                                            return p + c.point;
-                                        }, 0);
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.HARD,
-                                    pointBackgroundColor: COLORS.HARD
-                                },
-                                {
-                                    label: 'NORMAL',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "NORMAL";
-                                        }).reduce(function(p, c) {
-                                            return p + c.point;
-                                        }, 0);
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.NORMAL,
-                                    pointBackgroundColor: COLORS.NORMAL
-                                },
-                                {
-                                    label: 'EASY',
-                                    data: data.map(function(item) {
-                                        return item.data.filter(function(_item) {
-                                            return _item.difficulty === "EASY";
-                                        }).reduce(function(p, c) {
-                                            return p + c.point;
-                                        }, 0);
-                                    }), // y
-                                    fill: false,
-                                    borderColor: COLORS.EASY,
-                                    pointBackgroundColor: COLORS.EASY
-                                },
-                            ]
-                        }
-                    }
-                )
-            }
-            
-            
-
-            // function drawChartByDiff(data, func, options) {
-            //     const data = getAccumulatedUniqueGroupData();
-            //     const max = getMusicDiffs().reduce(function(prev, curr) {
-            //         const d = curr.musicDifficulty.toUpperCase();
-            //         prev[d] += 1;
-            //         return prev;
-            //     }, {
-            //         MASTER: 0,
-            //         EXPERT: 0,
-            //         HARD: 0,
-            //         NORMAL: 0,
-            //         EASY: 0,
-            //     });
-
-            //     const COLORS = {
-            //         "MASTER": "#9400D3",
-            //         "EXPERT": "#DC143C",
-            //         "HARD": "#FF8C00",
-            //         "NORMAL": "#00CED1",
-            //         "EASY": "#32CD32",
-            //     }
-
-            //     const datasets = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(diff) {
-            //         return {
-            //             label: diff,
-            //             data: data.map(function(item) {
-            //                 const filtered = item.data.filter(function(_item) {
-            //                     return _item.difficulty === diff;
-            //                 });
-
-            //                 return func(filtered);
-            //             }),
-            //             fill: false,
-            //             borderColor: COLORS[diff],
-            //             pointBackgroundColor: COLORS[diff],
-            //             tension: 0,
-            //         }
-            //     });
-            // }
-
-            function drawTotalClearChart() {
-                const data = getUniqueData();
                 const maxLen = musics.length;
+                const labels = data.map(x => x.group);
+                const datasets = [{
+                    label: "Musics",
+                    data: data.map(function(item) {
+                        return item.data.length;
+                    }),
+                    fill: false,
+                    borderColor: "#9400D3",
+                    pointBackgroundColor: "#9400D3",
+                    tension: 0,
+                }];
 
-                // const COLORS = {
-                //     "MASTER": "#9400D3",
-                //     "EXPERT": "#DC143C",
-                //     "HARD": "#FF8C00",
-                //     "NORMAL": "#00CED1",
-                //     "EASY": "#32CD32",
-                // }
-
-                const datasets = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(diff) {
-                    return {
-                        label: diff,
-                        data: data.map(function(item) {
-                            const filtered = item.data.filter(function(_item) {
-                                return _item.difficulty === diff;
-                            });
-
-                            return func(filtered);
-                        }),
-                        fill: false,
-                        borderColor: COLORS[diff],
-                        pointBackgroundColor: COLORS[diff],
-                        tension: 0,
-                    }
-                });
+                drawChart(
+                    "line",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        interation: INTERACTION_NEAREST,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: maxLen
+                            }
+                        }
+                    },
+                )
             }
 
-            function drawChartByCount(diff) {
-                const data = getAccumulatedUniqueGroupData();
-                const max = getMusicDiffs().reduce(function(prev, curr) {
-                    const d = curr.musicDifficulty.toUpperCase();
-                    prev[d] += 1;
-                    return prev;
-                }, {
-                    MASTER: 0,
-                    EXPERT: 0,
-                    HARD: 0,
-                    NORMAL: 0,
-                    EASY: 0,
-                });
-
-                const COLORS = {
-                    "MASTER": "#9400D3",
-                    "EXPERT": "#DC143C",
-                    "HARD": "#FF8C00",
-                    "NORMAL": "#00CED1",
-                    "EASY": "#32CD32",
-                }
-
-                const datasets = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(diff) {
+            function drawComboCountChart() {
+                const data = getGroupData().slice(1);
+                const types = ["perfect", "great", "good", "bad", "miss"];
+                const colors = ["#9400D3", "#DC143C", "#32CD32", "#00CED1", "#777777"];
+                const labels = data.map(x => x.group);
+                const datasets = types.map(function(type, i) {
+                    const color = colors[i];
+                    const lable = type.toUpperCase();
                     return {
-                        label: diff,
+                        label: lable,
                         data: data.map(function(item) {
-                            const filtered = item.data.filter(function(_item) {
-                                return _item.difficulty === diff;
-                            });
-
-                            return func(filtered);
+                            return item.data.reduce(function(p, c) {
+                                return p + c[type];
+                            }, 0);
                         }),
                         fill: false,
-                        borderColor: COLORS[diff],
-                        pointBackgroundColor: COLORS[diff],
+                        borderColor: color,
+                        pointBackgroundColor: color,
                         tension: 0,
                     }
                 });
+                
+                drawChart(
+                    "line",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        interation: INTERACTION_NEAREST,
+                    },
+                )
             }
 
             // 
@@ -2166,14 +1968,10 @@
                     case "play-count": drawPlayCountChart(); break;
                     case "play-count-acc": drawPlayCountAccChart(true); break;
                     case "compeleteness": drawCompletenessRateChart(); break; // by point
-
-                    case "total-clear": drawTotalClearChart(); break;
-
-                    case "music-count": drawMusicCountChart(); break;
-                    case "music-point": drawMusicPointChart(); break;
+                    case "clear-count": drawClearCountChart(); break;
+                    case "combo-count": drawComboCountChart(); break;
                 }
 
-                show();
                 endEvent();
             }
 
