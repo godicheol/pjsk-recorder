@@ -379,7 +379,7 @@ window.musics = [
     "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
     "publishedAt": 1560148031000,
     "liveStageId": 1,
-    "fillerSec": 8.982999801635742
+    "fillerSec": 8.973999977111816
   },
   {
     "id": 41,
@@ -569,7 +569,7 @@ window.musics = [
     "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
     "publishedAt": 1560148031000,
     "liveStageId": 1,
-    "fillerSec": 7.928999900817871
+    "fillerSec": 7.956999778747559
   },
   {
     "id": 51,
@@ -2203,7 +2203,7 @@ window.musics = [
     "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
     "publishedAt": 1633500000000,
     "liveStageId": 1,
-    "fillerSec": 8.324000358581543
+    "fillerSec": 8.329000473022461
   },
   {
     "id": 135,
@@ -2436,7 +2436,7 @@ window.musics = [
     "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
     "publishedAt": 1633327200000,
     "liveStageId": 1,
-    "fillerSec": 7.799799919128418
+    "fillerSec": 7.814000129699707
   },
   {
     "id": 146,
@@ -5835,7 +5835,7 @@ window.musics = [
     "creator": "ギガP",
     "lyricist": "れをる",
     "composer": "ギガ",
-    "arranger": "-",
+    "arranger": "ギガ(バーチャル・シンガーver.)",
     "dancerCount": 1,
     "selfDancerPosition": 0,
     "assetbundleName": "jacket_s_307",
@@ -5843,6 +5843,27 @@ window.musics = [
     "publishedAt": 1681711200000,
     "liveStageId": 1,
     "fillerSec": 9.0
+  },
+  {
+    "id": 308,
+    "seq": 2327801,
+    "releaseConditionId": 10,
+    "categories": [
+      "mv"
+    ],
+    "title": "ももいろの鍵",
+    "pronunciation": "ももいろのかぎ",
+    "creator": "いよわ",
+    "lyricist": "いよわ",
+    "composer": "いよわ",
+    "arranger": "いよわ",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_308",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1682687100000,
+    "liveStageId": 1,
+    "fillerSec": 7.90910005569458
   },
   {
     "id": 310,
@@ -6053,6 +6074,48 @@ window.musics = [
     "publishedAt": 1679637600000,
     "liveStageId": 1,
     "fillerSec": 9.0
+  },
+  {
+    "id": 322,
+    "seq": 1427601,
+    "releaseConditionId": 5,
+    "categories": [
+      "original"
+    ],
+    "title": "絶え間なく藍色",
+    "pronunciation": "たえまなくあいいろ",
+    "creator": "獅子志司",
+    "lyricist": "獅子志司",
+    "composer": "獅子志司",
+    "arranger": "獅子志司",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_322",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1682056800000,
+    "liveStageId": 1,
+    "fillerSec": 9.0
+  },
+  {
+    "id": 323,
+    "seq": 1228001,
+    "releaseConditionId": 5,
+    "categories": [
+      "mv"
+    ],
+    "title": "快晴",
+    "pronunciation": "かいせい",
+    "creator": "Orangestar",
+    "lyricist": "Orangestar",
+    "composer": "Orangestar",
+    "arranger": "Orangestar",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_323",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1682920800000,
+    "liveStageId": 1,
+    "fillerSec": 7.953499794006348
   },
   {
     "id": 326,
@@ -6269,7 +6332,7 @@ window.musics = [
     "seq": 2726601,
     "releaseConditionId": 10,
     "categories": [
-      "image"
+      "mv_2d"
     ],
     "title": "Be The MUSIC!",
     "pronunciation": "びーざみゅーじっく",
@@ -6350,6 +6413,90 @@ window.musics = [
     "fillerSec": 9.0
   },
   {
+    "id": 347,
+    "seq": 1128301,
+    "releaseConditionId": 5,
+    "categories": [
+      "image"
+    ],
+    "title": "円尾坂の仕立屋",
+    "pronunciation": "えんびざかのしたてや",
+    "creator": "mothy",
+    "lyricist": "mothy",
+    "composer": "mothy",
+    "arranger": "mothy",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_347",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1683266400000,
+    "liveStageId": 1,
+    "fillerSec": 9.0
+  },
+  {
+    "id": 348,
+    "seq": 1128401,
+    "releaseConditionId": 5,
+    "categories": [
+      "image"
+    ],
+    "title": "悪徳のジャッジメント",
+    "pronunciation": "あくとくのじゃっじめんと",
+    "creator": "mothy",
+    "lyricist": "mothy",
+    "composer": "mothy",
+    "arranger": "mothy",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_348",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1683352800000,
+    "liveStageId": 1,
+    "fillerSec": 9.0
+  },
+  {
+    "id": 349,
+    "seq": 1128101,
+    "releaseConditionId": 5,
+    "categories": [
+      "image"
+    ],
+    "title": "悪食娘コンチータ",
+    "pronunciation": "あくじきむすめこんちーた",
+    "creator": "mothy",
+    "lyricist": "mothy",
+    "composer": "mothy",
+    "arranger": "mothy",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_349",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1683093600000,
+    "liveStageId": 1,
+    "fillerSec": 9.006699562072754
+  },
+  {
+    "id": 350,
+    "seq": 1128201,
+    "releaseConditionId": 5,
+    "categories": [
+      "image"
+    ],
+    "title": "眠らせ姫からの贈り物",
+    "pronunciation": "ねむらせひめからのおくりもの",
+    "creator": "mothy",
+    "lyricist": "mothy",
+    "composer": "mothy",
+    "arranger": "mothy",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_350",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1683180000000,
+    "liveStageId": 1,
+    "fillerSec": 9.476200103759766
+  },
+  {
     "id": 351,
     "seq": 2227301,
     "releaseConditionId": 10,
@@ -6367,6 +6514,48 @@ window.musics = [
     "assetbundleName": "jacket_s_351",
     "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
     "publishedAt": 1681192800000,
+    "liveStageId": 1,
+    "fillerSec": 9.0
+  },
+  {
+    "id": 352,
+    "seq": 1627701,
+    "releaseConditionId": 5,
+    "categories": [
+      "image"
+    ],
+    "title": "命ばっかり",
+    "pronunciation": "いのちばっかり",
+    "creator": "ぬゆり",
+    "lyricist": "ぬゆり",
+    "composer": "ぬゆり",
+    "arranger": "ぬゆり",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_352",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1682316000000,
+    "liveStageId": 1,
+    "fillerSec": 9.468799591064453
+  },
+  {
+    "id": 353,
+    "seq": 2627901,
+    "releaseConditionId": 10,
+    "categories": [
+      "mv_2d"
+    ],
+    "title": "キティ",
+    "pronunciation": "きてぃ",
+    "creator": "ツミキ",
+    "lyricist": "ツミキ",
+    "composer": "ツミキ",
+    "arranger": "ツミキ",
+    "dancerCount": 1,
+    "selfDancerPosition": 0,
+    "assetbundleName": "jacket_s_353",
+    "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+    "publishedAt": 1682834400000,
     "liveStageId": 1,
     "fillerSec": 9.0
   },

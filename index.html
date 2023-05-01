@@ -5,275 +5,403 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>index.html</title>
-    <link href="./jquery-select-areas/resources/jquery.selectareas.css" media="screen" rel="stylesheet" type="text/css" />
-    <link href="./src/micromodal.css" rel="stylesheet" type="text/css" />
+    <link href="./style.css" rel="stylesheet" type="text/css" />
+    <link href="./src/tabulator/css/tabulator.min.css" rel="stylesheet" type="text/css" />
+    <link href="./src/jquery-select-areas/resources/jquery.selectareas.css" media="screen" rel="stylesheet" type="text/css" />
     <style>
-        *{
+        *, *::after, *::before{
             font-family: Arial, Helvetica, sans-serif;
         }
-        #setting-container{
-            padding: 0px 8px;
-            margin-bottom: 8px;
+        html{
+            font-size: 14px;
         }
-        #setting-container img{
+        #selection-wrapper img{
             width: 100%;
             height: auto;
         }
-        #result-table{
-            border-collapse: collapse;
-            text-align: center;
-            font-size: 0.9rem;
-            margin-top: 8px;
+        #manual-wrapper{
+            display: flex;
+            height: 50vh;
+            flex-direction: column;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
         }
-        #result-table th, 
-        #result-table td{
-            padding: 2px 4px;
-            border: 1px solid;
+        #manual-helps{
+            display: flex;
+            flex-direction: row;
+            align-content: center;
+            justify-content: center;
         }
-        #read-progress{
-            font-size: 0.8rem;
+        #manual-helps li::marker{
+            color: black !important;
         }
-        #music-list{
-            /* font-size: 0.8rem; */
-            
-            text-align: center;
+
+        #manual-help-1.unselected li.unselected,
+        #manual-help-1.unselected li.unselected::marker,
+        #manual-help-2.unselected li,
+        #manual-help-2.unselected li::marker{
+            color: #ccc !important;
         }
-        #music-list th, 
-        #music-list td{
-            padding: 2px 4px;
-        }
-        .modal {
-            display: none;
-        }
-        .modal.is-open {
-            display: block;
-        }
-        #modal-2-image{
-            width: 100%;
-        }
+
     </style>
-    
 </head>
 
 <body>
-    <!-- html -->
-    <div style="margin-bottom: 8px;">
-        <div style="display: inline-block;">
-            <img src="./img/examle.jpeg" height="128px;" alt="image">
-        </div>
-    
-        <div style="display: inline-block; color: #777; vertical-align: top; line-height: 1.3;">
-            <small>*Upload images like this.</small>
-            <br />
-            <small>*Size can be different.</small>
-            <br />
-            <small>*Aspect ratio(width / height) must be matched.</small>
-        </div>
+
+    <!-- init container -->
+    <div id="init-container">
+        <h3>Initialization</h3>
+        <ul>
+            <li class="mb-8">
+                <button id="manual-button" type="button">Manual</button>
+            </li>
+            <li>
+                <input id="upload-csv-input" type="file" accept="text/csv">
+            </li>
+        </ul>
     </div>
 
-    <div style="margin-bottom: 8px;">
-        <input id="upload-input" type="file" accept="image/*" multiple>
-    </div>
-
-    <div id="setting-container"></div>
-
-    <div>
-        <button id="end-button" onclick="endSelection()">Execute</button>
-        <button id="download-button" onclick="download()">Download</button>
-        <button onclick="showModal()">Music list</button>
-        <span id="read-progress"></span>
-    </div>
-
-    <div class="modal micromodal-slide" id="modal-1" aria-hidden="true">
-        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
-                <main class="modal__content" id="modal-1-content">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Artist</th>
-                            </tr>
-                        </thead>
-                        <tbody id="music-list"></tbody>
-                    </table>
-                </main>
+    <!-- manual container -->
+    <div id="manual-container" style="display: none;">
+        <div id="manual-wrapper">
+            <div class="ta-c">
+                <div id="manual-progress" class="mb-4">1 / 2</div>
+                <div id="manual-title" class="fs-12 mb-4">TEST</div>
+                <div id="manual-sub-title">TEST</div>
+            </div>
+            <div id="manual-helps" class="mt-12">
+                <div>
+                    <ol id="manual-help-1" class="lh-6 my-0">
+                        <li style="color: purple">MASTER</li>
+                        <li style="color: red;">EXPERT</li>
+                        <li style="color: orange;">HARD</li>
+                        <li style="color: steelblue;">NORMAL</li>
+                        <li style="color: olivedrab;">EASY</li>
+                    </ol>
+                </div>
+                <div>
+                    <ol id="manual-help-2" class="lh-6 my-0 unselected">
+                        <li>ALL PERFECT</li>
+                        <li>FULL COMBO</li>
+                        <li>LIVE CLEAR</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="mt-12 fc-7 fs-6">
+                Pass "Enter"
+                Cancel "ESC"
             </div>
         </div>
     </div>
 
-    <div class="modal micromodal-slide" id="modal-2" aria-hidden="true">
-        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
-                <main class="modal__content" id="modal-2-content">
-                    <img id="modal-2-image" src="" alt="image">
-                </main>
+    <!-- records -->
+    <div id="record-container" style="display: none;">
+        <h3>Records</h3>
+        <div id="record-table"></div>
+        
+        <!-- download -->
+        <h3>Result</h3>
+        <div id="download-container" class="mt-8">
+            <button id="download-button" type="button">Download</button>
+        </div>
+
+        <!-- chart -->
+        <div id="chart-container">
+            <h3>Chart</h3>
+            <div>
+                <!-- chart type -->
+                
+                <select id="chart-draw-type">
+                    <optgroup label="Point">
+                        <option value="ap-div-point">ALL PERFECT</option>
+                        <option value="fc-div-point">FULL COMBO</option>
+                        <option value="lc-div-point">LIVE CLEAR</option>
+                    </optgroup>
+                    <optgroup label="Count">
+                        <option value="ap-div-count">ALL PERFECT</option>
+                        <option value="fc-div-count">FULL COMBO</option>
+                        <option value="lc-div-count">LIVE CLEAR</option>
+                    </optgroup>
+                    <optgroup label="Accumulate Point">
+                        <option value="ap-acc-point">ALL PERFECT</option>
+                        <option value="fc-acc-point">FULL COMBO</option>
+                        <option value="lc-acc-point">LIVE CLEAR</option>
+                    </optgroup>
+                    <optgroup label="Accumulate Count">
+                        <option value="ap-acc-count">ALL PERFECT</option>
+                        <option value="fc-acc-count">FULL COMBO</option>
+                        <option value="lc-acc-count">LIVE CLEAR</option>
+                    </optgroup>
+                </select>
+                <button id="chart-draw-button" type="button">Draw</button>
+            </div>
+            <div id="chart-wrapper" style="display: none;">
+                <canvas id="chart-canvas"></canvas>
             </div>
         </div>
-    </div>    
 
-    <table id="result-table">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Artist</th>
-                <th>Difficulty</th>
-                <th>Level</th>
-                <th>Score</th>
-                <th>Point</th>
-                <th>Total</th>
-                <th>Combo</th>
-                <th>Cond.</th>
-                <th>P</th>
-                <th>G</th>
-                <th>G</th>
-                <th>B</th>
-                <th>M</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="result-list"></tbody>
-    </table>
+        <!-- addition container -->
+        <div id="addition-container">
+            <div>
+                <h3>Addition</h3>
+                <!-- selection buttons -->
+                <div class="mb-12">
+                    <input id="upload-images-input" type="file" accept="image/*" multiple>
+                    <button id="selection-read-button" type="button">Read</button>
+                    <button id="selection-save-button" type="button">Save</button>
+                </div>
+            </div>
+
+            <!-- selection -->
+            <div id="selection-container">
+                <div id="selection-wrapper"></div>
+            </div>
+
+            <!-- selection result -->
+            <div class="mt-12">
+                <div id="selection-result-table"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- footer -->
+    <div class="py-12 ta-r">
+        <a href="https://github.com/godicheol/pjsk-recorder/">Git</a>
+    </div>
+
     <!-- js -->
     <script src="./src/tesseract.min.js"></script>
+    <script src="./src/tabulator/js/tabulator.min.js"></script>
     <script src="./src/jquery.min.js"></script>
-    <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
-    <script src="./jquery-select-areas/jquery.selectareas.min.js"></script>
+    <script src="./src/jquery-select-areas/jquery.selectareas.min.js"></script>
+    <script src="./src/chartjs/chart.umd.js"></script>
     <script src="./src/csv.min.js"></script>
-    <script src="./src/munjayeol.js"></script>
+    <script src="./src/javascript-string.js"></script>
     <script src="./src/musics.js"></script> 
+    <script src="./src/musics-kr.js"></script> 
     <script src="./src/musicDifficulties.js"></script>
     <script>
-        const SCALE = {
-            // tested by iPhone12
-            // aspect ratio 2.16
-            iPhone: {
-                title: {
-                    x: 395 / 2532,
-                    y: 0 / 1170,
-                    w: 960 / 2532,
-                    h: 75 / 1170,
-                },
-                difficulty: {
-                    x: 400 / 2532,
-                    y: 80 / 1170,
-                    w: 200 / 2532,
-                    h: 60 / 1170,
-                },
-                score: {
-                    x: 300 / 2532,
-                    y: 280 / 1170,
-                    w: 620 / 2532,
-                    h: 183 / 1170,
-                },
-                combo: {
-                    x: 440 / 2532,
-                    y: 670 / 1170,
-                    w: 520 / 2532,
-                    h: 300 / 1170,
-                },
-                perfect: {
-                    x: 1170 / 2532,
-                    y: 668 / 1170,
-                    w: 160 / 2532,
-                    h: 60 / 1170,
-                },
-                great: {
-                    x: 1170 / 2532,
-                    y: 730 / 1170,
-                    w: 160 / 2532,
-                    h: 60 / 1170,
-                },
-                good: {
-                    x: 1170 / 2532,
-                    y: 793 / 1170,
-                    w: 160 / 2532,
-                    h: 60 / 1170,
-                },
-                bad: {
-                    x: 1170 / 2532,
-                    y: 846 / 1170,
-                    w: 160 / 2532,
-                    h: 60 / 1170,
-                },
-                miss: {
-                    x: 1170 / 2532,
-                    y: 897 / 1170,
-                    w: 160 / 2532,
-                    h: 60 / 1170,
-                }
-            },
-            // aspect ratio < 1.8
-            iPad: {
-                title: {
-                    x: 176 / 2208,
-                    y: 0 / 1242,
-                    w: 1020 / 2208,
-                    h: 72 / 1242,
-                },
-                difficulty: {
-                    x: 190 / 2208,
-                    y: 87 / 1242,
-                    w: 206 / 2208,
-                    h: 63 / 1242,
-                },
-                score: {
-                    x: 79 / 2208,
-                    y: 321 / 1242,
-                    w: 810 / 2208,
-                    h: 193 / 1242,
-                },
-                combo: {
-                    x: 226 / 2208,
-                    y: 738 / 1242,
-                    w: 586 / 2208,
-                    h: 316 / 1242,
-                },
-                perfect: {
-                    x: 1118 / 2208,
-                    y: 736 / 1242,
-                    w: 168 / 2208,
-                    h: 66 / 1242,
-                },
-                great: {
-                    x: 1118 / 2208,
-                    y: 800 / 1242,
-                    w: 168 / 2208,
-                    h: 66 / 1242,
-                },
-                good: {
-                    x: 1118 / 2208,
-                    y: 860 / 1242,
-                    w: 168 / 2208,
-                    h: 66 / 1242,
-                },
-                bad: {
-                    x: 1118 / 2208,
-                    y: 923 / 1242,
-                    w: 168 / 2208,
-                    h: 66 / 1242,
-                },
-                miss: {
-                    x: 1118 / 2208,
-                    y: 982 / 1242,
-                    w: 168 / 2208,
-                    h: 66 / 1242,
-                }
-            }
+        if (!musics) {
+            alert("Musics not found");
         }
-        let files = [];
-        let selectionImg = null;
-        let selectedAreas = null;
-        let result = [];
-        let inProgress = false;
+        if (!musicDifficulties) {
+            alert("MusicDifficulties not found");
+        }
+
+        // enum PageSegMode {
+        //         PSM_OSD_ONLY,       ///< Orientation and script detection only.
+        //         PSM_AUTO_OSD,       ///< Automatic page segmentation with orientation and
+        //                             ///< script detection. (OSD)
+        //         PSM_AUTO_ONLY,      ///< Automatic page segmentation, but no OSD, or OCR.
+        //         PSM_AUTO,           ///< Fully automatic page segmentation, but no OSD.
+        //         PSM_SINGLE_COLUMN,  ///< Assume a single column of text of variable sizes.
+        //         PSM_SINGLE_BLOCK_VERT_TEXT,  ///< Assume a single uniform block of vertically
+        //                                     ///< aligned text.
+        //         PSM_SINGLE_BLOCK,   ///< Assume a single uniform block of text. (Default.)
+        //         PSM_SINGLE_LINE,    ///< Treat the image as a single text line.
+        //         PSM_SINGLE_WORD,    ///< Treat the image as a single word.
+        //         PSM_CIRCLE_WORD,    ///< Treat the image as a single word in a circle.
+        //         PSM_SINGLE_CHAR,    ///< Treat the image as a single character.
+        //         PSM_SPARSE_TEXT,    ///< Find as much text as possible in no particular order.
+        //         PSM_SPARSE_TEXT_OSD,  ///< Sparse text with orientation and script det.
+        //         PSM_RAW_LINE,       ///< Treat the image as a single text line, bypassing
+        //                             ///< hacks that are Tesseract-specific.
+        //         PSM_COUNT           ///< Number of enum entries.
+        // };
 
         // tesseract
-        const { createWorker } = Tesseract;
-        const readText = async function(image, pos) {
+        // PSM.SINGLE_BLOCK
+        const { createWorker, PSM } = Tesseract;
+
+        const initContainer = document.querySelector("#init-container");
+        const manualButton = document.querySelector("#manual-button");
+        const manualProgress = document.querySelector("#manual-progress");
+        const manualTitle = document.querySelector("#manual-title");
+        const manualSubTitle = document.querySelector("#manual-sub-title");
+        const manualHelp1 = document.querySelector("#manual-help-1");
+        const manualHelp2 = document.querySelector("#manual-help-2");
+        const manualContainer = document.querySelector("#manual-container");
+        const manualWrapper = document.querySelector("#manual-wrapper");
+        const uploadImagesInput = document.querySelector("#upload-images-input");
+        const uploadCSVInput = document.querySelector("#upload-csv-input");
+        const additionContainer = document.querySelector("#addition-container");
+        const selectionContainer = document.querySelector("#selection-container");
+        const selectionWrapper = document.querySelector("#selection-wrapper");
+        const selectionButtons = document.querySelector("#selection-buttons");
+        const selectionReadButton = document.querySelector("#selection-read-button");
+        const selectionSaveButton = document.querySelector("#selection-save-button");
+        const selectionResultTable = document.querySelector("#selection-result-table");
+        const recordContainer = document.querySelector("#record-container");
+        const recordTable = document.querySelector("#record-table");
+        const downloadContainer = document.querySelector("#download-container");
+        const downloadButton = document.querySelector("#download-button");
+
+        const TITLE_CHARSET = getTitleCharSet();
+        const SCORE_CHARSET = "0123456789";
+        const DIFF_CHARSET = "ADEHLMNOPRSTXY";
+
+        let isInitialized = false;
+        let inProgress = false;
+        let uploadedFiles = [];
+        let selection = null;
+        let selectionResult = [];
+        let selectionTabulator = null;
+        let recordTabulator = null;
+
+        function startEvent() {
+            if (inProgress) {
+                throw new Error("Already in progress.");
+            }
+            inProgress = true;
+        }
+        function endEvent() {
+            inProgress = false;
+        }
+        function getScale(aspectRatio, type) {
+            const _ = {
+                // tested by iPhone12
+                // aspect ratio 2.16
+                mobile: {
+                    title: {
+                        x: 395 / 2532,
+                        y: 0 / 1170,
+                        w: 960 / 2532,
+                        h: 75 / 1170,
+                    },
+                    difficulty: {
+                        x: 400 / 2532,
+                        y: 80 / 1170,
+                        w: 200 / 2532,
+                        h: 60 / 1170,
+                    },
+                    score: {
+                        x: 300 / 2532,
+                        y: 280 / 1170,
+                        w: 620 / 2532,
+                        h: 183 / 1170,
+                    },
+                    combo: {
+                        x: 440 / 2532,
+                        y: 670 / 1170,
+                        w: 520 / 2532,
+                        h: 300 / 1170,
+                    },
+                    perfect: {
+                        x: 1170 / 2532,
+                        y: 668 / 1170,
+                        w: 160 / 2532,
+                        h: 60 / 1170,
+                    },
+                    great: {
+                        x: 1170 / 2532,
+                        y: 730 / 1170,
+                        w: 160 / 2532,
+                        h: 60 / 1170,
+                    },
+                    good: {
+                        x: 1170 / 2532,
+                        y: 793 / 1170,
+                        w: 160 / 2532,
+                        h: 60 / 1170,
+                    },
+                    bad: {
+                        x: 1170 / 2532,
+                        y: 846 / 1170,
+                        w: 160 / 2532,
+                        h: 60 / 1170,
+                    },
+                    miss: {
+                        x: 1170 / 2532,
+                        y: 897 / 1170,
+                        w: 160 / 2532,
+                        h: 60 / 1170,
+                    }
+                },
+                // aspect ratio < 1.8
+                tablet: {
+                    title: {
+                        x: 176 / 2208,
+                        y: 0 / 1242,
+                        w: 1020 / 2208,
+                        h: 72 / 1242,
+                    },
+                    difficulty: {
+                        x: 190 / 2208,
+                        y: 87 / 1242,
+                        w: 206 / 2208,
+                        h: 63 / 1242,
+                    },
+                    score: {
+                        x: 79 / 2208,
+                        y: 321 / 1242,
+                        w: 810 / 2208,
+                        h: 193 / 1242,
+                    },
+                    combo: {
+                        x: 226 / 2208,
+                        y: 738 / 1242,
+                        w: 586 / 2208,
+                        h: 316 / 1242,
+                    },
+                    perfect: {
+                        x: 1118 / 2208,
+                        y: 736 / 1242,
+                        w: 168 / 2208,
+                        h: 66 / 1242,
+                    },
+                    great: {
+                        x: 1118 / 2208,
+                        y: 800 / 1242,
+                        w: 168 / 2208,
+                        h: 66 / 1242,
+                    },
+                    good: {
+                        x: 1118 / 2208,
+                        y: 860 / 1242,
+                        w: 168 / 2208,
+                        h: 66 / 1242,
+                    },
+                    bad: {
+                        x: 1118 / 2208,
+                        y: 923 / 1242,
+                        w: 168 / 2208,
+                        h: 66 / 1242,
+                    },
+                    miss: {
+                        x: 1118 / 2208,
+                        y: 982 / 1242,
+                        w: 168 / 2208,
+                        h: 66 / 1242,
+                    }
+                }
+            }
+
+            if (aspectRatio > 1.8) {
+                return _.mobile[type];
+            } else {
+                return _.tablet[type];
+            }
+        }
+        function getTitleCharSet() {
+            return musics.map(function(item) {
+                return item.title;
+            }).reduce(function(prev, curr) {
+                return prev + curr.split("").reduce(function(_prev, _curr) {
+                    return prev.indexOf(_curr) < 0 ? _prev + _curr : _prev;
+                }, "");
+            }, "")
+        }
+        async function readText(image, pos, charset, mode) {
             const worker = await createWorker();
             await worker.loadLanguage('eng+jpn');
             await worker.initialize('eng+jpn');
+            if (charset) {
+                await worker.setParameters({
+                    tessedit_char_whitelist: charset
+                });
+            }
             const { data: { text } } = await worker.recognize(image, {
                 rectangle: {
                     top: pos.y,
@@ -281,123 +409,60 @@
                     width: pos.width,
                     height: pos.height
                 },
-                tessedit_pageseg_mode: 5, // line
+                tessedit_pageseg_mode: mode || PSM.SINGLE_BLOCK,
             });
             await worker.terminate();
             return text;
         }
-
-        const readDifficultyText = async function(image, pos) {
-            const worker = await createWorker();
-            await worker.loadLanguage('eng');
-            await worker.initialize('eng');
-            const { data: { text } } = await worker.recognize(image, {
-                rectangle: {
-                    top: pos.y,
-                    left: pos.x,
-                    width: pos.width,
-                    height: pos.height
-                },
-                tessedit_pageseg_mode: 6, // word
-                tessedit_char_whitelist: 'ADEHLMNOPRSTXY', 
-            });
-            await worker.terminate();
-            return text;
-        }
-
-        const readDigits = async function(image, pos) {
-            const worker = await createWorker();
-            await worker.loadLanguage('eng');
-            await worker.initialize('eng');
-            const { data: { text } } = await worker.recognize(image, {
-                rectangle: {
-                    top: pos.y,
-                    left: pos.x,
-                    width: pos.width,
-                    height: pos.height
-                },
-                tessedit_pageseg_mode: 6, // word
-                tessedit_char_whitelist: '0123456789',
-            });
-            await worker.terminate();
-            return text;
-        }
-
-        // upload
-        const uploadInput = document.querySelector("#upload-input");
-        const container = document.querySelector("#setting-container");
-        const readProgress = document.querySelector("#read-progress");
-
-        uploadInput.addEventListener("change", async function(e) {
-            const _files = e.target.files;
-            if (_files.length < 1) {
+        async function uploadImagesHandler(e) {
+            const files = e.target.files;
+            if (files.length < 1) {
+                return false;
+            }
+            try {
+                startEvent();
+            } catch(err) {
+                console.error(err);
+                e.target.value = null;
                 return false;
             }
 
-            setSelectArea(_files[0]);
-
-            for (var file of _files) {
-                files.push({
-                    isRead: false,
-                    isMatched: false,
-                    music: null,
-                    musicDiff: null,
-                    title: null,
-                    difficulty: null,
-                    level: 0,
-                    score: 0,
-                    combo: 0,
-                    condition: "MUSIC NOT FOUND",
-                    perfect: 0,
-                    great: 0,
-                    good: 0,
-                    bad: 0,
-                    miss: 0,
-                    file: file,
-                });
+            uploadedFiles = [];
+            for (var i = 0; i < files.length; i++) {
+                uploadedFiles.push(files[i]);
             }
-        });
-
-        async function readAll() {
-            if (!selectedAreas || selectedAreas.length !== 9) {
-                throw new Error("SelectedAreas not found");
-            }
-            var i = 1;
-            for (var file of files) {
-                if (!file.isRead) {
-                    readProgress.innerHTML = "Reading...(" + i + " / " + files.length + ")";
-                    await readFile(file);
-                }
-                i++;
-            }
-            readProgress.innerHTML = "Reading completed!";
-        }
-
-        async function readFile(file) {
-            const image = await getImage(file.file);
-            const title = await readTitle(image);
-            const difficulty = await readDifficulty(image);
-            const score = await readScore(image);
-            const combo = await readCombo(image);
-            const counts = await readCounts(image);
-
-            file.isRead = true;
-            file.title = title;
-            file.difficulty = difficulty;
-            file.score = score;
-            file.combo = combo;
-            file.perfect = counts.perfect;
-            file.great = counts.great;
-            file.good = counts.good;
-            file.bad = counts.bad;
-            file.miss = counts.miss;
             
-            return file;
-        }
+            await renderSelection(uploadedFiles[0]);
 
-        async function getImage(file) {
+            endEvent();
+
+            e.target.value = null;
+        }
+        async function renderSelection(file) {
+            selection = await loadImage(file);
+            selectionWrapper.innerHTML = "";
+            selectionWrapper.appendChild(selection);
+
+            const r1 = getBoundingBox(selection, "title");
+            const r2 = getBoundingBox(selection, "difficulty");
+            const r3 = getBoundingBox(selection, "score");
+            const r4 = getBoundingBox(selection, "combo");
+            const r5 = getBoundingBox(selection, "perfect");
+            const r6 = getBoundingBox(selection, "great");
+            const r7 = getBoundingBox(selection, "good");
+            const r8 = getBoundingBox(selection, "bad");
+            const r9 = getBoundingBox(selection, "miss");
+
+            $(selection).selectAreas({
+                allowSelect: false,
+                allowDelete: false,
+                minSize: [10, 10],
+                areas: [r1,r2,r3,r4,r5,r6,r7,r8,r9]
+            });
+        }
+        async function loadImage(file) {
             return new Promise(async function(resolve, reject) {
-                var img = document.createElement("img");
+                const img = document.createElement("img");
                 img.onload = function() {
                     resolve(img);
                 }
@@ -407,30 +472,10 @@
                 img.src = URL.createObjectURL(file);
             });
         }
-
-        function getSize(image) {
-            return {
-                width: image.width,
-                height: image.height,
-            }
-        }
-
-        function getOriginalSize(image) {
-            return {
-                width: image.naturalWidth || image.width,
-                height: image.naturalHeight || image.height,
-            }
-        }
-
-        function getArea(image, target) {
-            const {width, height} = getSize(image);
-            const aspectRatio = width / height;
-            let scale;
-            if (aspectRatio > 1.8) {
-                scale = SCALE["iPhone"][target];
-            } else {
-                scale = SCALE["iPad"][target];
-            }
+        function getBoundingBox(image, type) {
+            const {width, height, naturalWidth, naturalHeight} = image;
+            const aspectRatio = naturalWidth / naturalHeight;
+            const scale = getScale(aspectRatio, type);
             return {
                 x: width * scale.x,
                 y: height * scale.y,
@@ -438,47 +483,70 @@
                 height: height * scale.h,
             }
         }
+        function endSelection() {
+            if (selection) {
+                $(selection).selectAreas("destroy");
+            }
+            selectionWrapper.innerHTML = "";
+        }
+        function getSelectedScales() {
+            return $(selection).selectAreas("areas").map(function(item) {
+                return {
+                    x: item.x / selection.width,
+                    y: item.y / selection.height,
+                    width: item.width / selection.width,
+                    height: item.height / selection.height
+                };
+            });
+        }
+        function getSelectedAreas(image, scales) {
+            const areas = scales.map(function(item) {
+                return {
+                    x: image.naturalWidth * item.x,
+                    y: image.naturalHeight * item.y,
+                    width: image.naturalWidth * item.width,
+                    height: image.naturalHeight * item.height
+                };
+            });
 
-        function calcArea(image, selectedArea) {
             return {
-                x: image.naturalWidth * selectedArea.x,
-                y: image.naturalHeight * selectedArea.y,
-                width: image.naturalWidth * selectedArea.width,
-                height: image.naturalHeight * selectedArea.height
-            };
+                title: areas[0],
+                difficulty: areas[1],
+                score: areas[2],
+                combo: areas[3],
+                perfect: areas[4],
+                great: areas[5],
+                good: areas[6],
+                bad: areas[7],
+                miss: areas[8],
+            }
         }
-
-        async function readTitle(image) {
-            const area = calcArea(image, selectedAreas[0]);
-            const res = await readText(image, area);
-            return res.replace(/\s/g, "");
-        }
-
-        async function readDifficulty(image) {
-            const area = calcArea(image, selectedAreas[1]);
-            const res = await readDifficultyText(image, area);
-            return compareDifficulty(res);
-        }
-
-        async function readScore(image) {
-            const area = calcArea(image, selectedAreas[2]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        async function readCombo(image) {
-            const area = calcArea(image, selectedAreas[3]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        async function readCounts(image) {
-            const perfect = await readPerfect(image);
-            const great = await readGreat(image);
-            const good = await readGood(image);
-            const bad = await readBad(image);
-            const miss = await readMiss(image);
+        async function readImage(file, scales) {
+            const image = await loadImage(file);
+            const areas = getSelectedAreas(image, scales);
+            const title = (await readText(image, areas.title, TITLE_CHARSET)).replace(/\s/g, "");
+            console.log("Title:", title);
+            const difficulty = getDifficulty(await readText(image, areas.difficulty, DIFF_CHARSET));
+            console.log("Difficulty:", difficulty);
+            const score = parseInt(await readText(image, areas.score, SCORE_CHARSET));
+            console.log("Score:", score);
+            const combo = parseInt(await readText(image, areas.combo, SCORE_CHARSET));
+            console.log("Combo:", combo);
+            const perfect = parseInt(await readText(image, areas.perfect, SCORE_CHARSET));
+            console.log("Perfect:", perfect);
+            const great = parseInt(await readText(image, areas.great, SCORE_CHARSET));
+            console.log("Great:", great);
+            const good = parseInt(await readText(image, areas.good, SCORE_CHARSET));
+            console.log("Good:", good);
+            const bad = parseInt(await readText(image, areas.bad, SCORE_CHARSET));
+            console.log("Bad:", bad);
+            const miss = parseInt(await readText(image, areas.miss, SCORE_CHARSET));
+            console.log("Miss:", miss);
             return {
+                title,
+                difficulty,
+                score,
+                combo,
                 perfect,
                 great,
                 good,
@@ -486,456 +554,1120 @@
                 miss,
             }
         }
-
-        async function readPerfect(image) {
-            const area = calcArea(image, selectedAreas[4]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        async function readGreat(image) {
-            const area = calcArea(image, selectedAreas[5]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        async function readGood(image) {
-            const area = calcArea(image, selectedAreas[6]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        async function readBad(image) {
-            const area = calcArea(image, selectedAreas[7]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        async function readMiss(image) {
-            const area = calcArea(image, selectedAreas[8]);
-            const res = await readDigits(image, area);
-            return parseInt(res);
-        }
-
-        // selectareas
-        function setSelectArea(file) {
-            selectionImg = document.createElement("img");
-            selectionImg.onload = function() {
-                const r1 = getArea(selectionImg, "title");
-                const r2 = getArea(selectionImg, "difficulty");
-                const r3 = getArea(selectionImg, "score");
-                const r4 = getArea(selectionImg, "combo");
-                const r5 = getArea(selectionImg, "perfect");
-                const r6 = getArea(selectionImg, "great");
-                const r7 = getArea(selectionImg, "good");
-                const r8 = getArea(selectionImg, "bad");
-                const r9 = getArea(selectionImg, "miss");
-
-                $(selectionImg).selectAreas({
-                    allowSelect: false,
-                    allowDelete: false,
-                    minSize: [10, 10],
-                    areas: [r1,r2,r3,r4,r5,r6,r7,r8,r9]
-                });
+        async function readHandler() {
+            if (uploadedFiles.length < 1) {
+                console.error("Files not found");
+                return false;
             }
-            container.innerHTML = "";
-            container.appendChild(selectionImg);
-            selectionImg.src = URL.createObjectURL(file);
-        }
-        function destroySelection() {
-            if (selectionImg) {
-                $(selectionImg).selectAreas("destroy");
-            }
-            container.innerHTML = "";
-        }
-        async function endSelection() {
-            if (!selectionImg) {
+            if (!selection) {
                 console.error("Selection not found");
                 return false;
             }
-            if (inProgress) {
-                console.error("Already in progress");
+
+            startEvent();
+            selectionReadButton.innerHTML = "Reading...";
+
+            // get selected scales
+            const scales = getSelectedScales();
+
+            // destroy selection
+            endSelection();
+            createSelectionTabulator();
+
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                const file = uploadedFiles[i];
+                const data = await readImage(file, scales);
+                const music = getMusic(data.title);
+                const musicDiff = getMusicDiff(music, data.difficulty);
+                const now = new Date().getTime();
+
+                const record = {
+                    mid: music.id,
+                    mdid: musicDiff.id,
+                    score: data.score,
+                    combo: data.combo,
+                    perfect: data.perfect,
+                    great: data.great,
+                    good: data.good,
+                    bad: data.bad,
+                    miss: data.miss,
+                    createdAt: now,
+                    updatedAt: now,
+                }
+                const tableData = convertToData(record);
+                selectionTabulator.addData([tableData]);
+            }
+
+            selectionReadButton.innerHTML = "Read";
+
+            endEvent();
+        }
+        function convertToData(data) {
+            const music = musics.find(function(item) {
+                return item.id === data.mid;
+            });
+            if (!music) {
+                console.error("Music not found");
                 return false;
             }
-            try {
-                inProgress = true;
-
-                // set selectareas
-                setSelectedAreas();
-
-                // destroy selection
-                destroySelection();
-
-                // start read
-                await readAll();
-
-                // search music
-                searchAll();
-
-                // sort
-                sortFiles();
-
-                // end
-                renderResult();
-                container.innerHTML = "";
-            } catch(err) {
-                console.error(err);
-                alert("ERROR");
-            }
-        }
-
-        function setSelectedAreas() {
-            const areas = $(selectionImg).selectAreas("areas");
-            selectedAreas = areas.map(function(item) {
-                return {
-                    x: item.x / selectionImg.width,
-                    y: item.y / selectionImg.height,
-                    width: item.width / selectionImg.width,
-                    height: item.height / selectionImg.height
-                };
+            const musicDifficulty = musicDifficulties.find(function(item) {
+                return item.id === data.mdid;
             });
-        }
-
-        // munjayeol
-        function compareTitle(a, b) {
-            var res = munjayeol.parse(a, b);
-            var matches = res.reduce(function(prev, curr) {
-                if (!curr[0]) {
-                    return prev;
-                }
-                return prev + curr[1][2].length;
-            }, 0)
-            return matches / Math.max(a.length, b.length);
-        }
-        function compareDifficulty(b) {
-            var arr = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"];
-            // ADEHLMNOPRSTXY
-            for (var a of arr) {
-                var res = munjayeol.parse(b, a);
-                var matches = res.reduce(function(prev, curr) {
-                    if (!curr[0]) {
-                        return prev;
-                    }
-                    return prev + curr[1][2].length;
-                }, 0);
-
-                // if (matches / Math.max(a.length, b.length) > 0.5) {
-                //     return a;
-                // }
-                if (matches / b.length > 0.5) {
-                    return a;
-                }
+            if (!musicDifficulty) {
+                console.error("Music difficulty not found");
+                return false;
             }
-            return "ERROR";
+            const condition = getCondition(musicDifficulty, data);
+            return {
+                seq: music.seq,
+                mid: music.id,
+                mdid: musicDifficulty.id,
+                title: music.title,
+                titleKr: getKoreanTitle(music.id),
+                creator: music.creator,
+                composer: music.composer,
+                difficulty: musicDifficulty.musicDifficulty.toUpperCase(),
+                playLevel: musicDifficulty.playLevel,
+                totalNoteCount: musicDifficulty.totalNoteCount,
+                condition: condition,
+                score: data.score,
+                combo: data.combo,
+                perfect: data.perfect,
+                great: data.great,
+                good: data.good,
+                bad: data.bad,
+                miss: data.miss,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                timestamp: new Date(data.createdAt)
+            }
         }
-
-        function searchMusic(file) {
-            var maxAcc = 0,
-                music;
-            for (var item of musics) {
-                var acc = compareTitle(item.title, file.title);
-                if (acc > 0.6 && acc > maxAcc) {
-                    maxAcc = acc;
+        function convertToRecord(data) {
+            return {
+                mid: data.mid,
+                mdid: data.mdid,
+                score: data.score,
+                combo: data.combo,
+                perfect: data.perfect,
+                great: data.great,
+                good: data.good,
+                bad: data.bad,
+                miss: data.miss,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+            }
+        }
+        function getAccuracy(a, b) {
+            return jsString.parse(a, b).reduce(function(prev, curr) {
+                return curr.isMatched ? prev + (curr.to[1] - curr.to[0]) : prev;
+            }, 0) / Math.max(a.length, b.length);
+        }
+        function getMusic(title) {
+            let music;
+            let acc = 0;
+            musics.forEach(function(item) {
+                const _acc = getAccuracy(item.title.replace(/\s/g, ""), title);
+                if (acc < _acc) {
+                    acc = _acc;
                     music = item;
                 }
-            }
-
-            if (music) {
-                file.isMatched = true;
-                file.music = music;
+            });
+            return music;
+        }
+        function getMusicDiff(music, difficulty) {
+            return musicDifficulties.find(function(item) {
+                return item.musicId === music.id && item.musicDifficulty === difficulty.toLowerCase();
+            });
+        }
+        function getDifficulty(diff) {
+            const arr = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"];
+            let difficulty;
+            let acc = 0;
+            arr.forEach(function(item) {
+                const _acc = getAccuracy(item, diff);
+                if (acc < _acc) {
+                    acc = _acc;
+                    difficulty = item;
+                }
+            });
+            return difficulty;
+        }
+        function getCondition(musicDiff, data) {
+            const {combo, perfect, great, good, bad, miss} = data;
+            const total = musicDiff.totalNoteCount;
+            if (!musicDiff) {
+                return "NOT FOUND";
+            } else if (combo > total) {
+                return "COMBO ERROR";
+            } else if (perfect+great+good+bad+miss !== total) {
+                return "COUNT ERROR";
+            } else if (perfect === total) {
+                return "ALL PERFECT";
+            } else if (combo === total) {
+                return "FULL COMBO";
             } else {
-                file.isMatched = false;
-                file.music = null;
+                return "LIVE CLEAR";
             }
         }
-
-        function searchDiff(file) {
-            const { isMatched, music, difficulty } = file;
-            if (!isMatched || !music) {
-                file.musicDiff = null;
+        function isValidData(data) {
+            const {combo, perfect, great, good, bad, miss} = data;
+            const musicDiff = musicDifficulties.find(function(item) {
+                return item.id === data.mdid;
+            });
+            const totalNoteCount = musicDiff.totalNoteCount;
+            if (!musicDiff) {
+                return false;
+            } else if (combo > totalNoteCount) {
+                return false;
+            } else if (perfect+great+good+bad+miss !== totalNoteCount) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        function getKoreanTitle(id) {
+            if (!musicsKr) {
+                return "";
+            }
+            const music = musicsKr.find(function(item) {
+                return item.id === id;
+            });
+            return music && music.infos[0] ? music.infos[0].title : "";
+        }
+        function editTitleHandler(cell) {
+            const value = parseInt(cell.getValue());
+            const row = cell.getRow();
+            const data = row.getData();
+            const music = musics.find(function(item) {
+                return item.id === value;
+            });
+            if (!music) {
+                console.error("Music not found");
                 return false;
             }
-            const musicDiff = musicDifficulties.find(function(elem) {
-                return elem.musicId === music.id && 
-                    elem.musicDifficulty === difficulty.toLowerCase();
+            const musicDifficulty = getMusicDiff(music, data.difficulty);
+            if (!musicDifficulty) {
+                console.error("Music difficulty not found");
+                return false;
+            }
+
+            const condition = getCondition(musicDifficulty, data);
+
+            row.update({
+                mid: music.id,
+                mdid: musicDifficulty.id,
+                title: music.title,
+                titleKr: getKoreanTitle(music.id),
+                creator: music.creator,
+                condition: condition,
+                playLevel: musicDifficulty.playLevel,
+                totalNoteCount: musicDifficulty.totalNoteCount,
+                updatedAt: new Date().getTime()
             });
-            if (musicDiff) {
-                file.musicDiff = musicDiff;
-            } else {
-                file.musicDiff = null;
+        }
+        function editDifficultyHandler(cell) {
+            const value = cell.getValue();
+            const row = cell.getRow();
+            const data = row.getData();
+            const musicDifficulty = getMusicDiff({id: data.mid}, value);
+            if (!musicDifficulty) {
+                console.error("Music difficulty not found");
+                return false;
             }
-        }
 
-        function setCondition(file) {
-            const {combo, perfect, great, good, bad, miss} = file;
-            if (file.musicDiff) {
-                const total = file.musicDiff.totalNoteCount;
-                if (combo > total) {
-                    file.condition = "COMBO ERROR";
-                } else if (perfect+great+good+bad+miss !== total) {
-                    file.condition = "COUNT ERROR";
-                } else if (perfect === total) {
-                    file.condition = "ALL PERFECT";
-                } else if (combo === total) {
-                    file.condition = "FULL COMBO";
-                } else {
-                    file.condition = "LIVE CLEAR";
-                }
-            } else {
-                file.condition = "MUSIC NOT FOUND";
+            const condition = getCondition(musicDifficulty, data);
+
+            row.update({
+                mdid: musicDifficulty.id,
+                condition: condition,
+                playLevel: musicDifficulty.playLevel,
+                totalNoteCount: musicDifficulty.totalNoteCount,
+                updatedAt: new Date().getTime()
+            });
+        }
+        function editComboHandler(cell) {
+            const value = cell.getValue();
+            const row = cell.getRow();
+            const data = row.getData();
+            const musicDifficulty = getMusicDiff({id: data.mid}, data.difficulty);
+            if (!musicDifficulty) {
+                console.error("Music difficulty not found");
+                return false;
             }
-        }
+            const condition = getCondition(musicDifficulty, data);
 
-        function searchAll() {
-            for (var file of files) {
-                const {isMatched} = file;
-                if (file.isMatched) {
-                    continue;
-                }
-                searchMusic(file);
-                searchDiff(file);
-                setCondition(file);
-            }
+            row.update({
+                condition: condition,
+                updatedAt: new Date().getTime()
+            });
         }
-
-        function getPoint(file) {
-            const {combo, perfect, great, good, bad, miss} = file;
-            let point = 0;
-            if (["COMBO ERROR", "COUNT ERROR", "MUSIC NOT FOUND"].indexOf(file.condition) < 0) {
-                // Project SEKAI Championship 2023 Spring rules
-                point += perfect * 3;
-                point += great * 2;
-                point += good * 1;
-                // point += bad * 0;
-                // point += miss * 0;
-            }
-            return point;
+        function editHandler() {
+            const value = cell.getValue();
+            const row = cell.getRow();
+            row.update({
+                updatedAt: new Date().getTime()
+            });
         }
-
-        function getTitle(file) {
-            return file.music ? file.music.title : "NOT FOUND";
+        function getMusicTitleList() {
+            return musics.reduce(function(prev, curr) {
+                prev[curr.id] = curr.title;
+                return prev;
+            }, {});
         }
-        function getArtist(file) {
-            return file.music ? file.music.creator : "NOT FOUND";
-        }
-        function getTotal(file) {
-            return file.musicDiff ? file.musicDiff.totalNoteCount : 0
-        }
-        function getLevel(file) {
-            return file.musicDiff ? file.musicDiff.playLevel : 0;
-        }
-
-        function sortFiles() {
-            files = files.sort(function(a, b) {
-                if (!a.music || !a.musicDiff) {
-                    return 1;
-                }
-                if (!b.music || !b.musicDiff) {
-                    return -1;
-                }
-                if (a.music.id === b.music.id) {
-                    if (a.musicDiff.playLevel === b.musicDiff.playLevel) {
-                        if (a.combo === b.combo) {
-                            return b.great - a.great;
+        function createSelectionTabulator() {
+            selectionTabulator = new Tabulator("#selection-result-table", {
+                layout: "fitDataStretch",
+                layoutColumnsOnNewData: true,
+                columns: [
+                    {title: "#", field: "seq"},
+                    {title: "Title", field: "title", editor: "list", editorParams: {
+                        values: getMusicTitleList()
+                    }, cellEdited: editTitleHandler},
+                    {title: "제목", field: "titleKr"},
+                    {title: "Artist", field: "composer"},
+                    {title: "Difficulty", field: "difficulty", editor: "list", editorParams: {
+                        values: {
+                            "MASTER": "MASTER",
+                            "EXPERT": "EXPERT",
+                            "HARD": "HARD",
+                            "NORMAL": "NORMAL",
+                            "EASY": "EASY",
                         }
-                        return b.combo - a.combo;
-                    }
-                    return b.musicDiff.playLevel - a.musicDiff.playLevel;
-                } else {
-                    return a.music.id - b.music.id;
+                    }, cellEdited: editDifficultyHandler},
+                    {title: "Level", field: "playLevel"},
+                    {title: "Notes", field: "totalNoteCount"},
+                    {title: "Condition", field: "condition"},
+                    {title: "Score", field: "score", editor:"number", cellEdited: editHandler},
+                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler},
+                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler},
+                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler},
+                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler},
+                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler},
+                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler},
+                ]
+            });
+        }
+
+        function destroySelectionTabulator() {
+            if (selectionTabulator) {
+                selectionTabulator.destroy();
+            }
+        }
+
+        // 
+        // render records table
+        // 
+
+        function setDateFormat(date) {
+            return date.getFullYear() +
+                '-' + ( (date.getMonth()+1) < 9 ? "0" + (date.getMonth()+1) : (date.getMonth()+1) ) +
+                '-' + ( (date.getDate()) < 9 ? "0" + (date.getDate()) : (date.getDate()) );
+        }
+
+        function renderRecordTable(data) {
+            const _data = data.sort(function(a, b) {
+                return a.createdAt - b.createdAt;
+            }).map(function(item) {
+                return convertToData(item);
+            });
+            recordTabulator = new Tabulator("#record-table", {
+                data: _data,
+                layout: "fitDataStretch",
+                layoutColumnsOnNewData: true,
+                groupBy: function(__data) {
+                    return setDateFormat(__data.timestamp);
+                },
+                columns: [
+                    {title: "#", field: "seq"},
+                    {title: "Title", field: "title", editor: "list", editorParams: {
+                        values: getMusicTitleList()
+                    }, cellEdited: editTitleHandler},
+                    {title: "제목", field: "titleKr"},
+                    {title: "Artist", field: "composer"},
+                    {title: "Difficulty", field: "difficulty", editor: "list", editorParams: {
+                        values: {
+                            "MASTER": "MASTER",
+                            "EXPERT": "EXPERT",
+                            "HARD": "HARD",
+                            "NORMAL": "NORMAL",
+                            "EASY": "EASY",
+                        }
+                    }, cellEdited: editDifficultyHandler},
+                    {title: "Level", field: "playLevel"},
+                    {title: "Notes", field: "totalNoteCount"},
+                    {title: "Condition", field: "condition"},
+                    {title: "Score", field: "score", editor:"number"},
+                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler},
+                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler},
+                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler},
+                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler},
+                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler},
+                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler},
+                ]
+            });
+        }
+
+        // 
+        // manual initialize
+        // 
+
+        function getManualMusicList() {
+            const __getDiff = function(id) {
+                return ["master", "expert", "hard", "normal", "easy"].reduce(function(prev, curr) {
+                    const diff = musicDifficulties.find(function(item) {
+                        return item.musicId === id && item.musicDifficulty === curr
+                    });
+                    prev[curr] = {
+                        id: diff.id,
+                        totalNoteCount: diff.totalNoteCount,
+                        playLevel: diff.playLevel
+                    };
+                    return prev;
+                }, {});
+            }
+            return musics.map(function(item) {
+                return {
+                    id: item.id,
+                    seq: item.seq,
+                    title: item.title,
+                    titleKr: getKoreanTitle(item.id),
+                    artist: item.creator,
+                    difficulties: __getDiff(item.id)
                 }
-                // deprecated
-                // if (b.level === a.level) {
-                //     if (b.combo === a.combo) {
-                //         if (b.perfect === a.perfect) {
-                //             return b.great - a.great;
-                //         }
-                //         return b.perfect - a.perfect;
-                //     }
-                //     return b.combo - a.combo;
-                // }
-                // return b.level - a.level;
+            }).sort(function(a, b) {
+                return a.seq - b.seq;
             });
         }
 
-        // DOM
-        function renderResult() {
-            var target = document.querySelector("#result-list");
-            target.innerHTML = "";
-
-            let countTotal = {
-                level: 0,
-                score: 0,
-                point: 0,
-                total: 0,
-                combo: 0,
-                perfect: 0,
-                great: 0,
-                good: 0,
-                bad: 0,
-                miss: 0,
-            }
-
-            for (var i = 0; i < files.length; i++) {
-                const file = files[i];
-                const {isRead, isMatched, music, musicDiff, difficulty, score, combo, condition, perfect, great, good, bad, miss} = file;
-                const title = getTitle(file);
-                const artist = getArtist(file);
-                const total = getTotal(file);
-                const level = getLevel(file);
-                const point = getPoint(file);
-                var row = document.createElement("tr");
-                row.innerHTML += "<td><a href='javascript:void(0);' onclick='showModal2("+i+");'>" + title + "</a></td>";
-                row.innerHTML += "<td>" + artist + "</td>";
-                row.innerHTML += "<td>" + difficulty + "</td>";
-                row.innerHTML += "<td>" + level + "</td>";
-                row.innerHTML += "<td>" + score + "</td>";
-                row.innerHTML += "<td>" + point + "</td>";
-                row.innerHTML += "<td>" + total + "</td>";
-                row.innerHTML += "<td>" + combo + "</td>";
-                row.innerHTML += "<td>" + condition + "</td>";
-                row.innerHTML += "<td>" + perfect + "</td>";
-                row.innerHTML += "<td>" + great + "</td>";
-                row.innerHTML += "<td>" + good + "</td>";
-                row.innerHTML += "<td>" + bad + "</td>";
-                row.innerHTML += "<td>" + miss + "</td>";
-                row.innerHTML += "<td><a href='javascript:void(0);' onClick='startEdit("+i+");'>Edit</a></td>";
-                target.appendChild(row);
-
-                if (!isNaN(level)) { countTotal.level += level; }
-                if (!isNaN(score)) { countTotal.score += score; }
-                if (!isNaN(point)) { countTotal.point += point; }
-                if (!isNaN(total)) { countTotal.total += total; }
-                if (!isNaN(combo)) { countTotal.combo += combo; }
-                if (!isNaN(perfect)) { countTotal.perfect += perfect; }
-                if (!isNaN(great)) { countTotal.great += great; }
-                if (!isNaN(good)) { countTotal.good += good; }
-                if (!isNaN(bad)) { countTotal.bad += bad; }
-                if (!isNaN(miss)) { countTotal.miss += miss; }
-            }
-
-            var row = document.createElement("tr");
-            row.style.borderTop = "2px solid black";
-            row.innerHTML += "<td></td>";
-            row.innerHTML += "<td></td>";
-            row.innerHTML += "<td></td>";
-            row.innerHTML += "<td>" + countTotal.level + "</td>";
-            row.innerHTML += "<td>" + countTotal.score + "</td>";
-            row.innerHTML += "<td>" + countTotal.point + "</td>";
-            row.innerHTML += "<td>" + countTotal.total + "</td>";
-            row.innerHTML += "<td>" + countTotal.combo + "</td>";
-            row.innerHTML += "<td></td>";
-            row.innerHTML += "<td>" + countTotal.perfect + "</td>";
-            row.innerHTML += "<td>" + countTotal.great + "</td>";
-            row.innerHTML += "<td>" + countTotal.good + "</td>";
-            row.innerHTML += "<td>" + countTotal.bad + "</td>";
-            row.innerHTML += "<td>" + countTotal.miss + "</td>";
-            row.innerHTML += "<td></td>";
-            target.appendChild(row);
-
-            inProgress = false;
+        function showManualContainer() {
+            manualContainer.style.display = "";
+        }
+        function hideManualContainer() {
+            manualContainer.style.display = "none";
         }
 
-        function getCount(str, origin) {
-            if (isNaN(parseInt(str))) {
-                return origin;
-            } else {
-                return parseInt(str);
+        function startManualInitialize() {
+            if (isInitialized) {
+                alert("Already initialized!");
+                return false;
             }
-        }
+            startEvent();
+            showManualContainer();
+            hideInitContainer();
+            hideAdditionContainer();
 
-        function startEdit(n) {
-            inProgress = true;
-            const file = files[n];
-            const {isRead, isMatched, title, difficulty, level, score, combo, perfect, great, good, bad, miss} = file;
+            const list = getManualMusicList();
+            let result = [];
+            let l = list.length;
+            let i = 0;
+            let state = 0;
+            let difficulty = 0;
+            let condition = 0;
 
-            file.isMatched = false;
-            file.title = window.prompt("Title", title) || title;
-            file.difficulty = window.prompt("Difficulty", difficulty) || difficulty;
-            file.score = getCount(window.prompt("Score", score), score);
-            file.combo = getCount(window.prompt("Combo", combo), combo);
-            file.perfect = getCount(window.prompt("Perfect", perfect), perfect);
-            file.great = getCount(window.prompt("Great", great), great);
-            file.good = getCount(window.prompt("Good", good), good);
-            file.bad = getCount(window.prompt("Bad", bad), bad);
-            file.miss = getCount(window.prompt("Miss", miss), miss);
+            function exec() {
+                function renderTitle(title) {
+                    manualTitle.innerHTML = title;
+                }
+                function renderSubTitle(title) {
+                    if (title) {
+                        manualSubTitle.innerHTML = title;
+                    } else {
+                        manualSubTitle.innerHTML = " ";
+                    }
+                }
+                function renderProgress() {
+                    manualProgress.innerHTML = (i+1) + " / " + l;
+                }
+                if (i < l) {
+                    const item = list[i];
+                    renderTitle(item.title);
+                    renderSubTitle(item.titleKr);
+                    renderProgress();
+                } else {
+                    // end
+                    renderRecordTable(result);
+                    showRecordContainer();
+                    isInitialized = true;
+                    destroy();
+                    hideInitContainer();
+                    hideAdditionContainer();
+                    console.log("End initialized");
+                }
+            }
+            function saveRecord() {
+                const music = list[i];
+                const now = new Date().getTime();
+                let record = {
+                    mid: music.id,
+                    mdid: null,
+                    score: 0,
+                    combo: 0,
+                    perfect: 0,
+                    great: 0,
+                    good: 0,
+                    bad: 0,
+                    miss: 0,
+                    createdAt: now,
+                    updatedAt: now
+                }
+                let totalNoteCount;
+                if (difficulty === 0) {
+                    record.mdid = music.difficulties.master.id;
+                    totalNoteCount = music.difficulties.master.totalNoteCount;
+                } else if (difficulty === 1) {
+                    record.mdid = music.difficulties.expert.id;
+                    totalNoteCount = music.difficulties.expert.totalNoteCount;
+                } else if (difficulty === 2) {
+                    record.mdid = music.difficulties.hard.id;
+                    totalNoteCount = music.difficulties.hard.totalNoteCount;
+                } else if (difficulty === 3) {
+                    record.mdid = music.difficulties.normal.id;
+                    totalNoteCount = music.difficulties.normal.totalNoteCount;
+                } else if (difficulty === 4) {
+                    record.mdid = music.difficulties.easy.id;
+                    totalNoteCount = music.difficulties.easy.totalNoteCount;
+                }
+                if (condition === 0) {
+                    // AP
+                    record.combo = totalNoteCount;
+                    record.perfect = totalNoteCount;
+                } else if (condition === 1) {
+                    // FC
+                    record.combo = totalNoteCount;
+                    record.great = totalNoteCount;
+                } else if (condition === 2) {
+                    // LC
+                    record.good = totalNoteCount;
+                }
+                result.push(record);
+            }
+            function prevMusic() {
+                if (i > 0) {
+                    if (result.length > 0 && list[i].title === result[result.length - 1].title) {
+                        result.pop();
+                    }
+                    clearHighlight();
+                    manualHelp2.classList.add("unselected");
+                    state = 0
+                    difficulty = 0;
+                    condition = 0;
+                    i--;
+                    exec();
+                } else {
+                    console.error("First item of list");
+                }
+            }
+            function passMusic() {
+                clearHighlight();
+                manualHelp2.classList.add("unselected");
+                state = 0
+                difficulty = 0;
+                condition = 0;
+                i++;
+                exec();
+            }
+            function setHighlight(n) {
+                const items = manualHelp1.children;
+                for (var i = 0; i < items.length; i++) {
+                    if (i === n) {
+                        items[i].classList.add("selected");
+                    } else {
+                        items[i].classList.add("unselected");
+                    }
+                }
+            }
+            function clearHighlight() {
+                const items = manualHelp1.children;
+                for (var i = 0; i < items.length; i++) {
+                    items[i].classList.remove("selected");
+                    items[i].classList.remove("unselected");
+                }
+                manualHelp1.classList.remove("unselected");
+                manualHelp2.classList.remove("unselected");
+            }
             
-            if (["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].indexOf(file.difficulty) < 0) {
-                file.difficulty = "ERROR";
+            function selectItem(n) {
+                if (state === 0) {
+                    if (n < 0 || n > 4) {
+                        return false;    
+                    }
+                    clearHighlight();
+                    setHighlight(n)
+                    difficulty = n;
+                    state = 1;
+                    manualHelp1.classList.add("unselected");
+                } else {
+                    if (n < 0 || n > 2) {
+                        return false;    
+                    }
+                    clearHighlight();
+                    condition = n;
+                    state = 0;
+                    saveRecord();
+                    i++;
+                    exec();
+                    manualHelp2.classList.add("unselected");
+                }
             }
-            
-            searchMusic(file);
-            searchDiff(file);
-            setCondition(file);
-            sortFiles();
-            renderResult();
+            function keydownHandler(e) {
+                const {key, keyCode, code, shiftKey } = e;
+                // console.log(key, keyCode, code, shiftKey)
+
+                if (keyCode === 27) {
+                    // escape
+                    e.preventDefault();
+                    destroy();
+                    showInitContainer();
+                    showAdditionContainer();
+                } else if (keyCode === 13) {
+                    // enter
+                    e.preventDefault();
+                    passMusic();
+                } else if (keyCode === 8) {
+                    // backspace
+                    e.preventDefault();
+                    prevMusic();
+                } else if (keyCode === 49) {
+                    // 1
+                    e.preventDefault();
+                    selectItem(0);
+                } else if (keyCode === 50) {
+                    // 2
+                    e.preventDefault();
+                    selectItem(1);
+                } else if (keyCode === 51) {
+                    // 3
+                    e.preventDefault();
+                    selectItem(2);
+                } else if (keyCode === 52) {
+                    // 4
+                    e.preventDefault();
+                    selectItem(3);
+                } else if (keyCode === 53) {
+                    // 5
+                    e.preventDefault();
+                    selectItem(4);
+                }
+            };
+
+            function destroy() {
+                clearHighlight();
+                hideManualContainer();
+                document.removeEventListener("keydown", keydownHandler);
+                endEvent();
+            }
+
+            exec();
+
+            document.addEventListener("keydown", keydownHandler);
         }
 
-        // download
-        function download() {
-            var header = ["title", "artist", "difficulty", "level", "score", "point", "total", "combo", "condition", "perfect", "great", "good", "bad", "miss"]
-            var data = files.map(function(item) {
-                return [
-                    getTitle(item),
-                    getArtist(item),
-                    item.difficulty,
-                    getLevel(item),
-                    item.score,
-                    getPoint(item),
-                    getTotal(item),
-                    item.combo,
-                    item.condition,
-                    item.perfect,
-                    item.great,
-                    item.good,
-                    item.bad,
-                    item.miss,
-                ];
+        function saveHandler() {
+            startEvent();
+            if (selectionTabulator && recordTabulator) {
+                const data = selectionTabulator.getData();
+                recordTabulator.addData(data);
+                destroySelectionTabulator();
+            }
+            endEvent();
+        }
+
+        function checkValidData(data) {
+            const music = musics.find(function(item) {
+                return item.id === data.mid;
             });
+            if (!music) {
+                console.error("Music not found");
+                return false;
+            }
+            const musicDifficulty = musicDifficulties.find(function(item) {
+                return item.id === data.mdid;
+            });
+            if (!musicDifficulty) {
+                console.error("Music difficulty not found");
+                return false;
+            }
+
+            const condition = getCondition(musicDifficulty, data);
+
+            row.update({
+                mid: music.id,
+                mdid: musicDifficulty.id,
+                title: music.title,
+                titleKr: getKoreanTitle(music.id),
+                creator: music.creator,
+                condition: condition,
+                playLevel: musicDifficulty.playLevel,
+                totalNoteCount: musicDifficulty.totalNoteCount,
+            });
+        }
+
+        function downloadHandler() {
+            startEvent();
+            if (recordTabulator) {
+                const data = recordTabulator.getData().map(function(item) {
+                    return convertToRecord(item);
+                }).sort(function(a, b) {
+                    if (a.createdAt !== b.createdAt) {
+                        return a.createdAt - b.createdAt;
+                    } else {
+                        return a.seq - b.seq;
+                    }
+                });
+
+                for (const item of data) {
+                    if (!isValidData(item)) {
+                        endEvent();
+                        alert("Invalid data found.");
+                        return false;
+                    }
+                }
+
+                downloadToCSV(data);
+            }
+            endEvent();
+        }
+
+        function showAdditionContainer() {
+            additionContainer.style.display = "";
+        }
+        function hideAdditionContainer() {
+            additionContainer.style.display = "none";
+        }
+        function showInitContainer() {
+            initContainer.style.display = "";
+        }
+        function hideInitContainer() {
+            initContainer.style.display = "none";
+        }
+        function showRecordContainer() {
+            recordContainer.style.display = "";
+        }
+
+        function downloadToCSV(data) {
+            var header = [
+                "mid",
+                "mdid",
+                "score",
+                "combo",
+                "perfect",
+                "great",
+                "good",
+                "bad",
+                "miss",
+                "createdAt",
+                "updatedAt",
+            ];
             var csv = new CSV(data, { header: header}).encode();
             var element = document.createElement('a');
             element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
-            element.setAttribute('download', "pjsk-recorder");
+            element.setAttribute('download', "pjsk-recorder-"+Date.now());
             element.style.display = 'none';
             document.body.appendChild(element);
             element.click();
             document.body.removeChild(element);
         }
 
-        // list modal
-        MicroModal.init({
-            disableScroll: false,
-        });
+        async function uploadCSVHandler(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                return false;
+            }
 
-        function setModal1() {
-            const target = document.querySelector("#music-list");
-            musics.forEach(function(item) {
-                var html = "<tr>";
-                html += "<td>" + item.id + "</td>";
-                html += "<td>" + item.title + "</td>";
-                html += "<td>" + item.creator + "</td>";
-                html += "</tr>";
-                target.innerHTML += html;
+            const data = await readCSV(file);
+
+            renderRecordTable(data);
+            hideInitContainer();
+            showRecordContainer();
+        }
+
+        function readCSV(file) {
+            return new Promise(function(resolve, reject) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = new CSV(e.target.result, {
+                        header: true
+                    }).parse();
+                    resolve(data);
+                }
+                reader.onerror = function(err) {
+                    reject(err);
+                }
+                reader.readAsText(file);
             });
         }
-        function showModal() {
-            MicroModal.show("modal-1");
-        }
-        function closeModal() {
-            MicroModal.close("modal-1");
-        }
-        function showModal2(i) {
-            const target = document.querySelector("#modal-2-image");
-            target.src = URL.createObjectURL(files[i].file);
-            MicroModal.show("modal-2");
-        }
-        function closeModal2() {
-            const target = document.querySelector("#modal-2-image");
-            URL.revokeObjectURL(target.src);
-            MicroModal.close("modal-2");
-        }
 
-        setModal1();
+        uploadImagesInput.addEventListener("change", uploadImagesHandler);
+        uploadCSVInput.addEventListener("change", uploadCSVHandler)
+        selectionReadButton.addEventListener("click", readHandler);
+        selectionSaveButton.addEventListener("click", saveHandler);
+        manualButton.addEventListener("click", startManualInitialize);
+        downloadButton.addEventListener("click", downloadHandler);
+
+
+        // 
+        // chart
+        //
+
+        (async function() {
+            const chartDrawType = document.querySelector("#chart-draw-type");
+            const chartDrawButton = document.querySelector("#chart-draw-button");
+            const chartWrapper = document.querySelector("#chart-wrapper");
+            const chartCanvas = document.querySelector("#chart-canvas");
+
+            let drawnChart;
+
+            function show() {
+                chartWrapper.style.display = "";
+            }
+            function hide() {
+                chartWrapper.style.display = "none";
+            }
+
+            function getPoint(data) {
+                // Project SEKAI Championship 2023 Spring rules
+                const {combo, perfect, great, good, bad, miss} = data;
+                // let point = 0;
+                // point += perfect * 3;
+                // point += great * 2;
+                // point += good * 1;
+                // point += bad * 0;
+                // point += miss * 0;
+                return perfect * 3 + great * 2 + good * 1;
+            }
+
+            function getMaxPoint(data) {
+                // Project SEKAI Championship 2023 Spring rules
+                return data.totalNoteCount * 3;
+            }
+            function getComboRate(data) {
+                return data.combo / data.totalNoteCount;
+            }
+            function getPerfectRate(data) {
+                return data.perfect / data.totalNoteCount;
+            }
+            function getGreatRate(data) {
+                return data.bad / data.totalNoteCount;
+            }
+            function getGoodRate(data) {
+                return data.good / data.totalNoteCount;
+            }
+            function getBadRate(data) {
+                return data.bad / data.totalNoteCount;
+            }
+            function getMissRate(data) {
+                return data.miss / data.totalNoteCount;
+            }
+            function getCompletenessRate(data) {
+                return getPoint(data) / getMaxPoint(data);
+            }
+            function getData() {
+                return recordTabulator.getRows().map(function(row) {
+                    const data = convertToData(row.getData());
+                    const group = row.getGroup().getKey();
+                    const arr = group.split("-");
+                    return Object.assign(data, {
+                        group: group,
+                        year: parseInt(arr[0]),
+                        month: parseInt(arr[1]),
+                        day: parseInt(arr[2]),
+                        maxPoint: getMaxPoint(data),
+                        point: getPoint(data),
+                        comboRate: getComboRate(data),
+                        perfectRate: getPerfectRate(data),
+                        greatRate: getGreatRate(data),
+                        goodRate: getGoodRate(data),
+                        badRate: getBadRate(data),
+                        missRate: getMissRate(data),
+                        completenessRate: getCompletenessRate(data),
+                    });
+                });
+            }
+            function getGroupData() {
+                return recordTabulator.getGroups().map(function(group) {
+                    const _group = group.getKey();
+                    const arr = _group.split("-");
+                    const data = group.getRows().map(function(row) {
+                        const _data = convertToData(row.getData());
+                        return Object.assign(_data, {
+                            maxPoint: getMaxPoint(_data),
+                            point: getPoint(_data),
+                            perfectRate: getPerfectRate(_data),
+                            greatRate: getGreatRate(_data),
+                            goodRate: getGoodRate(_data),
+                            badRate: getBadRate(_data),
+                            missRate: getMissRate(_data),
+                            completenessRate: getCompletenessRate(_data),
+                        })
+                    });
+                    return {
+                        group: _group,
+                        year: parseInt(arr[0]),
+                        month: parseInt(arr[1]),
+                        day: parseInt(arr[2]),
+                        data: data,
+                    }
+                });
+            }
+            function getAccumulatedGroupData() {
+                return getGroupData().reduce(function(prev, curr, index, array) {
+                    const data = array.filter(function(item) {
+                        return new Date(item.group).getTime() <= new Date(curr.group).getTime();
+                    }).map(function(item) {
+                        return item.data;
+                    }).reduce(function(_prev, _curr) {
+                        return _prev.concat(_curr);
+                    }, []);
+
+                    prev.push({
+                        group: curr.group,
+                        year: curr.year,
+                        month: curr.month,
+                        day: curr.day,
+                        data: data
+                    });
+
+                    return prev;
+                }, []);
+            }
+
+            function drawChart(type, func) {
+                const data = getGroupData();
+                const COLORS = {
+                    "MASTER": "#9400D3",
+                    "EXPERT": "#DC143C",
+                    "HARD": "#FF8C00",
+                    "NORMAL": "#00CED1",
+                    "EASY": "#32CD32",
+                }
+                const getValue = function(_data) {
+                    if (type === "count") {
+                        return _data.length;
+                    } else if (type === "point") {
+                        return _data.reduce(function(p,c) {
+                            return p + c.point;
+                        }, 0);
+                    } else {
+                        throw new Error("Invalid argument type");
+                    }
+                }
+                drawnChart = new Chart(
+                    chartCanvas,
+                    {
+                        type: 'line',
+                        data: {
+                            labels: data.map(x => x.group), // x
+                            datasets: [
+                                {
+                                    label: 'MASTER',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.MASTER,
+                                    pointBackgroundColor: COLORS.MASTER,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EXPERT',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EXPERT,
+                                    pointBackgroundColor: COLORS.EXPERT,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'HARD',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.HARD,
+                                    pointBackgroundColor: COLORS.HARD,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'NORMAL',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.NORMAL,
+                                    pointBackgroundColor: COLORS.NORMAL,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EASY',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EASY,
+                                    pointBackgroundColor: COLORS.EASY,
+                                    tension: 0,
+                                },
+                            ]
+                        }
+                    }
+                )
+            }
+
+            function drawAccumulateChart(type, func) {
+                const data = getAccumulatedGroupData();
+                const COLORS = {
+                    "MASTER": "#9400D3",
+                    "EXPERT": "#DC143C",
+                    "HARD": "#FF8C00",
+                    "NORMAL": "#00CED1",
+                    "EASY": "#32CD32",
+                }
+                const getValue = function(_data) {
+                    if (type === "count") {
+                        return _data.length;
+                    } else if (type === "point") {
+                        return _data.reduce(function(p,c) {
+                            return p + c.point;
+                        }, 0);
+                    } else {
+                        throw new Error("Invalid argument type");
+                    }
+                }
+                drawnChart = new Chart(
+                    chartCanvas,
+                    {
+                        type: 'line',
+                        data: {
+                            labels: data.map(x => x.group), // x
+                            datasets: [
+                                {
+                                    label: 'MASTER',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "MASTER" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.MASTER,
+                                    pointBackgroundColor: COLORS.MASTER,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EXPERT',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EXPERT" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EXPERT,
+                                    pointBackgroundColor: COLORS.EXPERT,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'HARD',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "HARD" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.HARD,
+                                    pointBackgroundColor: COLORS.HARD,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'NORMAL',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "NORMAL" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.NORMAL,
+                                    pointBackgroundColor: COLORS.NORMAL,
+                                    tension: 0,
+                                },
+                                {
+                                    label: 'EASY',
+                                    data: data.map(function(item) {
+                                        const filteredData = item.data.filter(function(_item) {
+                                            return _item.difficulty === "EASY" && (func ? func(_item) : true);
+                                        });
+
+                                        return getValue(filteredData);
+                                    }), // y
+                                    fill: false,
+                                    borderColor: COLORS.EASY,
+                                    pointBackgroundColor: COLORS.EASY,
+                                    tension: 0,
+                                },
+                            ]
+                        }
+                    }
+                )
+            }
+
+
+            function chartDrawHandler(e) {
+                startEvent();
+
+                if (drawnChart) {
+                    drawnChart.destroy();
+                }
+                const type = chartDrawType.value;
+
+                switch(type) {
+                    case "lc-acc-point": drawAccumulateChart("point"); break;
+                    case "fc-acc-point": drawAccumulateChart("point", item => item.comboRate === 1); break;
+                    case "ap-acc-point": drawAccumulateChart("point", item => item.perfectRate === 1); break;
+                    case "lc-acc-count": drawAccumulateChart("count"); break;
+                    case "fc-acc-count": drawAccumulateChart("count", item => item.comboRate === 1); break;
+                    case "ap-acc-count": drawAccumulateChart("count", item => item.perfectRate === 1); break;
+
+                    case "lc-div-point": drawChart("point"); break;
+                    case "fc-div-point": drawChart("point", item => item.comboRate === 1); break;
+                    case "ap-div-point": drawChart("point", item => item.perfectRate === 1); break;
+                    case "lc-div-count": drawChart("count"); break;
+                    case "fc-div-count": drawChart("count", item => item.comboRate === 1); break;
+                    case "ap-div-count": drawChart("count", item => item.perfectRate === 1); break;
+                }
+
+                show();
+                endEvent();
+            }
+
+            chartDrawButton.addEventListener("click", chartDrawHandler);
+        })();
         
     </script>
 </body>

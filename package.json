@@ -1,7 +1,7 @@
 {
   "name": "pjsk-recorder",
-  "version": "1.0.1",
-  "description": "",
+  "version": "1.0.3",
+  "description": "Project sekai game result recorder.",
   "main": "index.js",
   "scripts": {
     "unlink": "rimraf .git",
