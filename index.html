@@ -1242,7 +1242,7 @@
                     {title: "Level", field: "playLevel", width: 100, headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction, headerFilterLiveFilter: false},
                     {title: "Notes", field: "totalNoteCount", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
                     {title: "Condition", field: "condition", headerFilter:"input", formatter: conditionFormatter, headerFilterLiveFilter: false},
-                    {title: "Rank", field: "point", width: 64, headerFilter:"number", headerFilterFunc:rankFilterFunction, headerFilterPlaceholder:"Top", headerFilterLiveFilter: false},
+                    {title: "Rank", field: "point", width: 84, headerFilter:"number", headerFilterFunc:rankFilterFunction, headerFilterPlaceholder:"Top", headerFilterLiveFilter: false},
                     {title: "Score", field: "score", editor:"number", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
                     {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
                     {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
@@ -1638,12 +1638,25 @@
             if (!file) {
                 return false;
             }
+            startEvent();
 
             const data = await readCSV(file);
+
+            // check values
+            for (const item of data) {
+                if (!isValidData(item)) {
+                    alert("Invalid data found.");
+                    endEvent();
+                    e.target.value = null;
+                    return false;
+                }
+            }
 
             renderRecordTable(data);
             hideInitContainer();
             showRecordContainer();
+            endEvent();
+            e.target.value = null;
         }
 
         function readCSV(file) {
