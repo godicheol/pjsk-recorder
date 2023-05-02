@@ -229,9 +229,14 @@
         let recordTabulator = null;
 
         function getNow() {
-            const d = new Date();
-            const utc = d.getTime() + d.getTimezoneOffset() * 60 * 1000;
+            const now = new Date();
+            const utc = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
             return new Date(utc + TIME_DIFF);
+        }
+
+        function parseISOLocal(s) {
+            var b = s.split(/\D/);
+            return new Date(b[0],b[1]-1,b[2]);
         }
 
         function startEvent() {
@@ -564,7 +569,7 @@
                 const data = await readImage(file, scales);
                 const music = getMusic(data.title);
                 const musicDiff = getMusicDiff(music, data.difficulty);
-                const now = getNow().getTime();
+                const now = new Date().getTime();
 
                 const record = {
                     mid: music.id,
@@ -764,7 +769,7 @@
                 condition: condition,
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
-                updatedAt: getNow().getTime()
+                updatedAt: new Date().getTime()
             });
         }
         function editDifficultyHandler(cell) {
@@ -784,7 +789,7 @@
                 condition: condition,
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
-                updatedAt: getNow().getTime()
+                updatedAt: new Date().getTime()
             });
         }
         function editComboHandler(cell) {
@@ -800,14 +805,14 @@
 
             row.update({
                 condition: condition,
-                updatedAt: getNow().getTime()
+                updatedAt: new Date().getTime()
             });
         }
         function editHandler() {
             const value = cell.getValue();
             const row = cell.getRow();
             row.update({
-                updatedAt: getNow().getTime()
+                updatedAt: new Date().getTime()
             });
         }
         function getMusicTitleForEditorParams() {
@@ -943,18 +948,20 @@
                 //rowData - the data for the row being filtered
                 //filterParams - params object passed to the headerFilterFuncParams property
 
-                var start = new Date(headerValue.start);
-                var end = new Date(headerValue.end);
+                var start = parseISOLocal(headerValue.start);
+                var end = parseISOLocal(headerValue.end);
                 var value = new Date(rowValue).getTime();
                 if(rowValue){
                     if (headerValue.start != ""){
                         if (headerValue.end != ""){
+                            end.setDate(end.getDate() + 1);
                             return value >= start.getTime() && value <= end.getTime();
                         } else{
                             return value >= start.getTime();
                         }
                     } else {
                         if(headerValue.end != ""){
+                            end.setDate(end.getDate() + 1);
                             return value <= end.getTime();
                         }
                     }
@@ -1178,7 +1185,7 @@
             }
             function saveRecord() {
                 const music = list[i];
-                const now = getNow().getTime();
+                const now = new Date().getTime();
                 let record = {
                     mid: music.id,
                     mdid: null,
