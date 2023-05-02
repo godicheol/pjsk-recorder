@@ -101,7 +101,7 @@
                 </div>
             </div>
             <div class="mt-12 fc-7 fs-6">
-                Pass "Enter"
+                Pass "Space bar"
                 Cancel "ESC"
             </div>
         </div>
@@ -1346,6 +1346,10 @@
                     showAdditionContainer();
                 } else if (keyCode === 13) {
                     // enter
+                    // e.preventDefault();
+                    // passMusic();
+                } else if (keyCode === 32) {
+                    // spacebar
                     e.preventDefault();
                     passMusic();
                 } else if (keyCode === 8) {
