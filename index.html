@@ -113,7 +113,7 @@
         </h3>
         
         <div class="mb-8">
-            <button id="reset-button">Reset</button>
+            <button id="reset-button">Reset filter</button>
             <button id="download-button" type="button">Download</button>
         </div>
 
@@ -127,9 +127,11 @@
                 <select id="chart-draw-type">
                     <option value="play-count">Play Count</option>
                     <option value="play-count-acc">Accumulated Play Count</option>
-                    <option value="compeleteness">Compeleteness</option>
+                    <option value="completeness">Completeness</option>
                     <option value="clear-count">Cleared Music Count</option>
                     <option value="combo-count">Combo Count</option>
+                    <option value="condition-count">Condition Count</option>
+                    <option value="condition-count-acc">Accumulated Condition Count</option>
                 </select>
                 <button id="chart-draw-button" type="button">Draw</button>
             </div>
@@ -187,29 +189,7 @@
             alert("MusicDifficulties not found");
         }
 
-        // enum PageSegMode {
-        //         PSM_OSD_ONLY,       ///< Orientation and script detection only.
-        //         PSM_AUTO_OSD,       ///< Automatic page segmentation with orientation and
-        //                             ///< script detection. (OSD)
-        //         PSM_AUTO_ONLY,      ///< Automatic page segmentation, but no OSD, or OCR.
-        //         PSM_AUTO,           ///< Fully automatic page segmentation, but no OSD.
-        //         PSM_SINGLE_COLUMN,  ///< Assume a single column of text of variable sizes.
-        //         PSM_SINGLE_BLOCK_VERT_TEXT,  ///< Assume a single uniform block of vertically
-        //                                     ///< aligned text.
-        //         PSM_SINGLE_BLOCK,   ///< Assume a single uniform block of text. (Default.)
-        //         PSM_SINGLE_LINE,    ///< Treat the image as a single text line.
-        //         PSM_SINGLE_WORD,    ///< Treat the image as a single word.
-        //         PSM_CIRCLE_WORD,    ///< Treat the image as a single word in a circle.
-        //         PSM_SINGLE_CHAR,    ///< Treat the image as a single character.
-        //         PSM_SPARSE_TEXT,    ///< Find as much text as possible in no particular order.
-        //         PSM_SPARSE_TEXT_OSD,  ///< Sparse text with orientation and script det.
-        //         PSM_RAW_LINE,       ///< Treat the image as a single text line, bypassing
-        //                             ///< hacks that are Tesseract-specific.
-        //         PSM_COUNT           ///< Number of enum entries.
-        // };
-
         // tesseract
-        // PSM.SINGLE_BLOCK
         const { createWorker, PSM } = Tesseract;
 
         const initContainer = document.querySelector("#init-container");
@@ -238,6 +218,7 @@
         const TITLE_CHARSET = getTitleCharSet();
         const SCORE_CHARSET = "0123456789";
         const DIFF_CHARSET = "ADEHLMNOPRSTXY";
+        const TIME_DIFF = 9 * 60 * 60 * 1000; // kr UTC +0900
 
         let isInitialized = false;
         let inProgress = false;
@@ -246,6 +227,12 @@
         let selectionResult = [];
         let selectionTabulator = null;
         let recordTabulator = null;
+
+        function getNow() {
+            const d = new Date();
+            const utc = d.getTime() + d.getTimezoneOffset() * 60 * 1000;
+            return new Date(utc + TIME_DIFF);
+        }
 
         function startEvent() {
             if (inProgress) {
@@ -319,59 +306,59 @@
                 // aspect ratio < 1.8
                 tablet: {
                     title: {
-                        x: 176 / 2208,
-                        y: 0 / 1242,
-                        w: 1020 / 2208,
-                        h: 72 / 1242,
+                        x: 70/850,
+                        y: 0/637,
+                        w: 391/850,
+                        h: 33/637,
                     },
                     difficulty: {
-                        x: 190 / 2208,
-                        y: 87 / 1242,
-                        w: 206 / 2208,
-                        h: 63 / 1242,
+                        x: 75/850,
+                        y: 35/637,
+                        w: 77/850,
+                        h: 21/637,
                     },
                     score: {
-                        x: 79 / 2208,
-                        y: 321 / 1242,
-                        w: 810 / 2208,
-                        h: 193 / 1242,
+                        x: 28/850,
+                        y: 202/637,
+                        w: 310/850,
+                        h: 72/637,
                     },
                     combo: {
-                        x: 226 / 2208,
-                        y: 738 / 1242,
-                        w: 586 / 2208,
-                        h: 316 / 1242,
+                        x: 91/850,
+                        y: 364/637,
+                        w: 205/850,
+                        h: 119/637,
                     },
                     perfect: {
-                        x: 1118 / 2208,
-                        y: 736 / 1242,
-                        w: 168 / 2208,
-                        h: 66 / 1242,
+                        x: 388/850,
+                        y: 364/637,
+                        w: 60/850,
+                        h: 23/637,
                     },
                     great: {
-                        x: 1118 / 2208,
-                        y: 800 / 1242,
-                        w: 168 / 2208,
-                        h: 66 / 1242,
+                        x: 388/850,
+                        y: 387/637,
+                        w: 60/850,
+                        h: 23/637,
                     },
                     good: {
-                        x: 1118 / 2208,
-                        y: 860 / 1242,
-                        w: 168 / 2208,
-                        h: 66 / 1242,
+                        x: 388/850,
+                        y: 410/637,
+                        w: 60/850,
+                        h: 23/637,
                     },
                     bad: {
-                        x: 1118 / 2208,
-                        y: 923 / 1242,
-                        w: 168 / 2208,
-                        h: 66 / 1242,
+                        x: 388/850,
+                        y: 433/637,
+                        w: 60/850,
+                        h: 23/637,
                     },
                     miss: {
-                        x: 1118 / 2208,
-                        y: 982 / 1242,
-                        w: 168 / 2208,
-                        h: 66 / 1242,
-                    }
+                        x: 388/850,
+                        y: 456/637,
+                        w: 60/850,
+                        h: 23/637,
+                    },
                 }
             }
 
@@ -577,7 +564,7 @@
                 const data = await readImage(file, scales);
                 const music = getMusic(data.title);
                 const musicDiff = getMusicDiff(music, data.difficulty);
-                const now = new Date().getTime();
+                const now = getNow().getTime();
 
                 const record = {
                     mid: music.id,
@@ -777,7 +764,7 @@
                 condition: condition,
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
-                updatedAt: new Date().getTime()
+                updatedAt: getNow().getTime()
             });
         }
         function editDifficultyHandler(cell) {
@@ -797,7 +784,7 @@
                 condition: condition,
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
-                updatedAt: new Date().getTime()
+                updatedAt: getNow().getTime()
             });
         }
         function editComboHandler(cell) {
@@ -813,14 +800,14 @@
 
             row.update({
                 condition: condition,
-                updatedAt: new Date().getTime()
+                updatedAt: getNow().getTime()
             });
         }
         function editHandler() {
             const value = cell.getValue();
             const row = cell.getRow();
             row.update({
-                updatedAt: new Date().getTime()
+                updatedAt: getNow().getTime()
             });
         }
         function getMusicTitleForEditorParams() {
@@ -884,8 +871,18 @@
 
         function setDateFormat(date) {
             return date.getFullYear() +
-                '-' + ( (date.getMonth()+1) < 9 ? "0" + (date.getMonth()+1) : (date.getMonth()+1) ) +
-                '-' + ( (date.getDate()) < 9 ? "0" + (date.getDate()) : (date.getDate()) );
+                '/' + ( (date.getMonth()+1) < 9 ? "0" + (date.getMonth()+1) : (date.getMonth()+1) ) +
+                '/' + ( (date.getDate()) < 9 ? "0" + (date.getDate()) : (date.getDate()) );
+        }
+
+        function conditionFormatter(cell, formatterParams) {
+            const value = cell.getValue();
+            if (["ALL PERFECT", "FULL COMBO", "LIVE CLEAR"].indexOf(value) > -1) {
+                cell.getRow().getElement().style.backgroundColor = "";
+            } else {
+                cell.getRow().getElement().style.backgroundColor = "#EE6666";
+            }
+            return value;
         }
 
         function renderRecordTable(data) {
@@ -894,6 +891,77 @@
             }).map(function(item) {
                 return convertToData(item);
             });
+            //custom header filter
+            var dateFilterEditor = function(cell, onRendered, success, cancel, editorParams){
+
+                var container = $("<span></span>")
+                //create and style input
+                var start = $("<input type='date' placeholder='Start'/>");
+                var end = $("<input type='date' placeholder='End'/>");
+
+                container.append(start).append(end);
+
+                var inputs = $("input", container);
+
+
+                inputs.css({
+                    "padding":"4px",
+                    "width":"50%",
+                    "box-sizing":"border-box",
+                })
+                .val(cell.getValue());
+
+                function buildDateString(){
+                    return {
+                        start:start.val(),
+                        end:end.val(),
+                    };
+                }
+
+                //submit new value on blur
+                inputs.on("change blur", function(e){
+                    success(buildDateString());
+                });
+
+                //submit new value on enter
+                inputs.on("keydown", function(e){
+                    if(e.keyCode == 13){
+                        success(buildDateString());
+                    }
+
+                    if(e.keyCode == 27){
+                        cancel();
+                    }
+                });
+
+                return container[0];
+            }
+            //custom filter function
+            function dateFilterFunction(headerValue, rowValue, rowData, filterParams){
+                //headerValue - the value of the header filter element
+                //rowValue - the value of the column in this row
+                //rowData - the data for the row being filtered
+                //filterParams - params object passed to the headerFilterFuncParams property
+
+                var start = new Date(headerValue.start);
+                var end = new Date(headerValue.end);
+                var value = new Date(rowValue).getTime();
+                if(rowValue){
+                    if (headerValue.start != ""){
+                        if (headerValue.end != ""){
+                            return value >= start.getTime() && value <= end.getTime();
+                        } else{
+                            return value >= start.getTime();
+                        }
+                    } else {
+                        if(headerValue.end != ""){
+                            return value <= end.getTime();
+                        }
+                    }
+                }
+
+                return false; //must return a boolean, true if it passes the filter.
+            }
             var minMaxFilterEditor = function(cell, onRendered, success, cancel, editorParams){
                 var end;
                 var container = document.createElement("span");
@@ -935,7 +1003,7 @@
                 container.appendChild(end);
 
                 return container;
-                }
+            }
 
             //custom max min filter function
             function minMaxFilterFunction(headerValue, rowValue, rowData, filterParams){
@@ -960,15 +1028,7 @@
 
                 return true; //must return a boolean, true if it passes the filter.
             }
-            function conditionFormatter(cell, formatterParams) {
-                const value = cell.getValue();
-                if (["ALL PERFECT", "FULL COMBO", "LIVE CLEAR"].indexOf(value) > -1) {
-                    cell.getRow().getElement().style.backgroundColor = "";
-                } else {
-                    cell.getRow().getElement().style.backgroundColor = "#EE6666";
-                }
-                return value;
-            }
+        
             recordTabulator = new Tabulator("#record-table", {
                 data: _data,
                 layout: "fitDataStretch",
@@ -1009,6 +1069,9 @@
                     {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
                     {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
                     {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
+                    {title: "Time", field: "createdAt", headerFilter:dateFilterEditor, headerFilterFunc:dateFilterFunction, formatter: function(cell) {
+                        return setDateFormat(new Date(cell.getValue()));
+                    }, headerSort: false,},
                 ]
             });
         }
@@ -1115,7 +1178,7 @@
             }
             function saveRecord() {
                 const music = list[i];
-                const now = new Date().getTime();
+                const now = getNow().getTime();
                 let record = {
                     mid: music.id,
                     mdid: null,
@@ -1943,6 +2006,40 @@
                 )
             }
 
+            function drawConditionCount() {
+                const data = getGroupData().slice(1);
+                const types = ["ALL PERFECT", "FULL COMBO", "LIVE CLEAR"];
+                const colors = ["#9400D3", "#ffa9cc", "#777777"];
+                const labels = data.map(x => x.group);
+                const datasets = types.map(function(type, i) {
+                    const color = colors[i];
+                    const lable = type.toUpperCase();
+                    return {
+                        label: lable,
+                        data: data.map(function(item) {
+                            return item.data.reduce(function(p, c) {
+                                return p + c[type];
+                            }, 0);
+                        }),
+                        fill: false,
+                        borderColor: color,
+                        pointBackgroundColor: color,
+                        tension: 0,
+                    }
+                });
+                
+                drawChart(
+                    "line",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        interation: INTERACTION_NEAREST,
+                    },
+                )
+            }
+
             // 
             // handler
             // 
@@ -1967,9 +2064,10 @@
                 switch(type) {
                     case "play-count": drawPlayCountChart(); break;
                     case "play-count-acc": drawPlayCountAccChart(true); break;
-                    case "compeleteness": drawCompletenessRateChart(); break; // by point
+                    case "completeness": drawCompletenessRateChart(); break; // by point
                     case "clear-count": drawClearCountChart(); break;
                     case "combo-count": drawComboCountChart(); break;
+                    case "condition-count": drawComboCountChart(); break;
                 }
 
                 endEvent();
