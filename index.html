@@ -114,7 +114,8 @@
         </h3>
         
         <div class="mb-8">
-            <button id="reset-button">Reset filter</button>
+            <button id="reset-sort-button">Reset Sorting</button>
+            <button id="reset-filter-button">Reset Filtering</button>
             <button id="download-button" type="button">Download</button>
         </div>
 
@@ -154,10 +155,25 @@
                         <option value="play-count-acc">Accumulated Play Count</option>
                         <option value="completeness">Completeness</option>
                         <option value="clear-count">Cleared Music Count</option>
-                        <option value="clear-condition-count">Cleared Coundition Count</option>
-                        <option value="combo-count">Combo Count</option>
-                        <option value="condition-count">Condition Count</option>
-                        <option value="condition-count-acc">Accumulated Condition Count</option>
+                        <option value="clear-condition-count">Cleared Coundition</option>
+                        <option value="combo-count">Combo</option>
+                        <option value="condition-count">Condition</option>
+                        <option value="condition-count-acc">Accumulated Condition</option>
+                        <option value="count-top-10">Top 10 Count</option>
+                        <option value="count-top-20">Top 20 Count</option>
+                        <option value="count-top-30">Top 30 Count</option>
+                        <option value="count-top-40">Top 40 Count</option>
+                        <option value="count-top-50">Top 50 Count</option>
+                        <option value="point-top-10">Top 10 Point</option>
+                        <option value="point-top-20">Top 20 Point</option>
+                        <option value="point-top-30">Top 30 Point</option>
+                        <option value="point-top-40">Top 40 Point</option>
+                        <option value="point-top-50">Top 50 Point</option>
+                        <option value="completeness-top-10">Top 10 Completeness</option>
+                        <option value="completeness-top-20">Top 20 Completeness</option>
+                        <option value="completeness-top-30">Top 30 Completeness</option>
+                        <option value="completeness-top-40">Top 40 Completeness</option>
+                        <option value="completeness-top-50">Top 50 Completeness</option>
                     </select>
                     <button id="chart-draw-button" type="button">Draw</button>
                 </div>
@@ -225,7 +241,8 @@
         const selectionResultTable = document.querySelector("#selection-result-table");
         const recordContainer = document.querySelector("#record-container");
         const recordTable = document.querySelector("#record-table");
-        const resetButton = document.querySelector("#reset-button");
+        const resetFilterButton = document.querySelector("#reset-filter-button");
+        const resetSortButton = document.querySelector("#reset-sort-button");
         const downloadButton = document.querySelector("#download-button");
         
         const TITLE_CHARSET = getTitleCharSet();
@@ -246,6 +263,13 @@
             document.querySelector("#last-published-music-title").innerHTML = lastMusic.title;
         } catch(err) {
             console.error(err);
+        }
+
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
         }
 
         function getNow() {
@@ -500,6 +524,7 @@
         }
         function endSelection() {
             if (selection) {
+                URL.revokeObjectURL(selection.src);
                 $(selection).selectAreas("destroy");
                 selection = null;
             }
@@ -558,6 +583,7 @@
             console.log("Bad:", bad);
             const miss = parseInt(await readText(image, areas.miss, SCORE_CHARSET));
             console.log("Miss:", miss);
+            URL.revokeObjectURL(image.src);
             return {
                 title,
                 difficulty,
@@ -633,8 +659,9 @@
                 console.error("Music difficulty not found");
                 return false;
             }
-            const condition = getCondition(musicDifficulty, data);
+
             return {
+                id: uuidv4(),
                 seq: music.seq,
                 mid: music.id,
                 mdid: musicDifficulty.id,
@@ -645,7 +672,15 @@
                 difficulty: musicDifficulty.musicDifficulty.toUpperCase(),
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
-                condition: condition,
+                condition: getCondition(musicDifficulty, data),
+                point: getPoint(data),
+                completeness: getCompleteness(musicDifficulty, data),
+                comboRate: getComboRate(data),
+                perfectRate: getPerfectRate(data),
+                greatRate: getGreatRate(data),
+                goodRate: getGoodRate(data),
+                badRate: getBadRate(data),
+                missRate: getMissRate(data),
                 score: data.score,
                 combo: data.combo,
                 perfect: data.perfect,
@@ -708,22 +743,6 @@
             });
             return difficulty;
         }
-
-        function getLastPublishedMusic() {
-            return musics.reduce(function(prev, curr) {
-                if (prev.publishedAt < curr.publishedAt) {
-                    prev = curr;
-                }
-                return prev;
-            }, {
-                publishedAt: 0
-            });
-        }
-        
-        // 
-        // selection
-        // 
-
         function getCondition(musicDiff, data) {
             const {combo, perfect, great, good, bad, miss} = data;
             const totalNoteCount = musicDiff.totalNoteCount;
@@ -745,6 +764,77 @@
                 return "LIVE CLEAR";
             }
         }
+        function getPoint(data) {
+            // Project SEKAI Championship 2023 Spring rules
+            const {combo, perfect, great, good, bad, miss} = data;
+            // let point = 0;
+            // point += perfect * 3;
+            // point += great * 2;
+            // point += good * 1;
+            // point += bad * 0;
+            // point += miss * 0;
+            return perfect * 3 + great * 2 + good * 1;
+        }
+        function getComboRate(data) {
+            return data.combo / data.totalNoteCount;
+        }
+        function getPerfectRate(data) {
+            return data.perfect / data.totalNoteCount;
+        }
+        function getGreatRate(data) {
+            return data.bad / data.totalNoteCount;
+        }
+        function getGoodRate(data) {
+            return data.good / data.totalNoteCount;
+        }
+        function getBadRate(data) {
+            return data.bad / data.totalNoteCount;
+        }
+        function getMissRate(data) {
+            return data.miss / data.totalNoteCount;
+        }
+        function getCompleteness(musicDiff, data) {
+            const {totalNoteCount} = musicDiff;
+            const {combo, perfect, great, good, bad, miss} = data;
+            return (perfect * 3 + great * 2 + good * 1) / (totalNoteCount * 3);
+        }
+
+        function getLastPublishedMusic() {
+            return musics.reduce(function(prev, curr) {
+                if (prev.publishedAt < curr.publishedAt) {
+                    prev = curr;
+                }
+                return prev;
+            }, {
+                publishedAt: 0
+            });
+        }
+        function compareData(a, b) {
+            if (a.playLevel !== b.playLevel) {
+                return Math.sign(b.playLevel - a.playLevel);
+            } else if (a.completeness !== b.completeness) {
+                return Math.sign(b.completeness - a.completeness);
+            } else if (a.combo !== b.combo) {
+                return Math.sign(b.combo - a.combo);
+            } else if (a.perfect !== b.perfect) {
+                return Math.sign(b.perfect - a.perfect);
+            } else if (a.greate !== b.greate) {
+                return Math.sign(b.greate - a.greate);
+            } else if (a.good !== b.good) {
+                return Math.sign(b.good - a.good);
+            } else if (a.bad !== b.bad) {
+                return Math.sign(b.bad - a.bad);
+            } else if (a.miss !== b.miss) {
+                return Math.sign(b.miss - a.miss);
+            } else {
+                return Math.sign(a.createdAt - b.createdAt);
+            }
+        }
+        
+        // 
+        // selection
+        // 
+
         function isValidData(data) {
             const {mid, mdid, combo, perfect, great, good, bad, miss} = data;
             const music = musics.find(function(item) {
@@ -800,15 +890,14 @@
                 return false;
             }
 
-            const condition = getCondition(musicDifficulty, data);
-
             row.update({
                 mid: music.id,
                 mdid: musicDifficulty.id,
                 title: music.title,
                 titleKr: getKoreanTitle(music.id),
                 creator: music.creator,
-                condition: condition,
+                condition:  getCondition(musicDifficulty, data),
+                completeness: getCompleteness(musicDifficulty, data),
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
                 updatedAt: new Date().getTime()
@@ -823,12 +912,10 @@
                 console.error("Music difficulty not found");
                 return false;
             }
-
-            const condition = getCondition(musicDifficulty, data);
-
             row.update({
                 mdid: musicDifficulty.id,
-                condition: condition,
+                condition: getCondition(musicDifficulty, data),
+                completeness: getCompleteness(musicDifficulty, data),
                 playLevel: musicDifficulty.playLevel,
                 totalNoteCount: musicDifficulty.totalNoteCount,
                 updatedAt: new Date().getTime()
@@ -843,10 +930,16 @@
                 console.error("Music difficulty not found");
                 return false;
             }
-            const condition = getCondition(musicDifficulty, data);
-
             row.update({
-                condition: condition,
+                condition: getCondition(musicDifficulty, data),
+                point: getPoint(data),
+                completeness: getCompleteness(musicDifficulty, data),
+                comboRate: getComboRate(data),
+                perfectRate: getPerfectRate(data),
+                greatRate: getGreatRate(data),
+                goodRate: getGoodRate(data),
+                badRate: getBadRate(data),
+                missRate: getMissRate(data),
                 updatedAt: new Date().getTime()
             });
         }
@@ -880,9 +973,9 @@
                 columns: [
                     {title: "Title", field: "title", editor: "list", editorParams: {
                         values: getMusicTitleForEditorParams()
-                    }, cellEdited: editTitleHandler, headerSort: false},
-                    {title: "제목", field: "titleKr", headerSort: false},
-                    {title: "Artist", field: "composer", headerSort: false},
+                    }, cellEdited: editTitleHandler},
+                    {title: "제목", field: "titleKr"},
+                    {title: "Artist", field: "composer"},
                     {title: "Difficulty", field: "difficulty", editor: "list", editorParams: {
                         values: {
                             "MASTER": "MASTER",
@@ -891,17 +984,18 @@
                             "NORMAL": "NORMAL",
                             "EASY": "EASY",
                         }
-                    }, cellEdited: editDifficultyHandler, headerSort: false},
-                    {title: "Level", field: "playLevel", headerSort: false},
-                    {title: "Notes", field: "totalNoteCount", headerSort: false},
-                    {title: "Condition", field: "condition", headerSort: false, formatter: conditionFormatter},
-                    {title: "Score", field: "score", editor:"number", cellEdited: editHandler, headerSort: false},
-                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler, headerSort: false},
-                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler, headerSort: false},
-                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler, headerSort: false},
-                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler, headerSort: false},
-                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler, headerSort: false},
-                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler, headerSort: false},
+                    }, cellEdited: editDifficultyHandler},
+                    {title: "Level", field: "playLevel"},
+                    {title: "Notes", field: "totalNoteCount"},
+                    {title: "Condition", field: "condition", formatter: conditionFormatter},
+                    {title: "Point", field: "point"},
+                    {title: "Score", field: "score", editor:"number", cellEdited: editHandler},
+                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler},
+                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler},
+                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler},
+                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler},
+                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler},
+                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler},
                 ]
             });
         }
@@ -925,16 +1019,18 @@
             }
             return value;
         }
-
         function renderRecordTable(data) {
-            const _data = data.sort(function(a, b) {
-                return a.createdAt - b.createdAt;
-            }).map(function(item) {
+            const _data = data.map(function(item) {
                 return convertToData(item);
+            }).sort(function(a, b) {
+                if (a.createdAt !== b.createdAt) {
+                    return a.createdAt - b.createdAt;
+                } else {
+                    return a.seq - b.seq;
+                }
             });
             //custom header filter
             var dateFilterEditor = function(cell, onRendered, success, cancel, editorParams){
-
                 var container = $("<span></span>")
                 //create and style input
                 var start = $("<input type='date' placeholder='Start'/>");
@@ -943,7 +1039,6 @@
                 container.append(start).append(end);
 
                 var inputs = $("input", container);
-
 
                 inputs.css({
                     "padding":"4px",
@@ -1071,7 +1166,48 @@
 
                 return true; //must return a boolean, true if it passes the filter.
             }
-        
+            function getRank(data) {
+                const sortedData = recordTabulator.getData().reduce(function(prev, curr) {
+                    const i = prev.findIndex(function(item) {
+                        return item.mid === curr.mid;
+                    });
+                    if (i > -1) {
+                        if (compareData(prev[i], curr) > 0) {
+                            prev[i] = curr;
+                        }
+                    } else {
+                        prev.push(curr);
+                    }
+                    return prev;
+                }, []).sort(function(a, b) {
+                    return compareData(a, b);
+                });
+
+                return sortedData.findIndex(function(item) {
+                    return item.id === data.id;
+                });
+            }
+
+            //custom max min filter function
+            function rankFilterFunction(headerValue, rowValue, rowData, filterParams){
+                //headerValue - the value of the header filter element
+                //rowValue - the value of the column in this row
+                //rowData - the data for the row being filtered
+                //filterParams - params object passed to the headerFilterFuncParams property
+
+                const rank = getRank(rowData);
+
+                if (rank < 0) {
+                    return false;
+                }
+
+                return rank < headerValue;
+            }
+
+            // 
+            // record table
+            // 
+
             recordTabulator = new Tabulator("#record-table", {
                 data: _data,
                 height: "70vh",
@@ -1083,9 +1219,9 @@
                 columns: [
                     {title: "Title", field: "title", editor: "list", editorParams: {
                         values: getMusicTitleForEditorParams()
-                    }, cellEdited: editTitleHandler, headerFilter: "input", headerSort: false},
-                    {title: "제목", field: "titleKr", headerFilter: "input", headerSort: false},
-                    {title: "Artist", field: "composer", headerFilter: "input", headerSort: false},
+                    }, cellEdited: editTitleHandler, headerFilter: "input", headerFilterLiveFilter: false},
+                    {title: "제목", field: "titleKr", headerFilter: "input", headerFilterLiveFilter: false},
+                    {title: "Artist", field: "composer", headerFilter: "input", headerFilterLiveFilter: false},
                     {title: "Difficulty", field: "difficulty", editor: "list", editorParams: {
                         values: {
                             "MASTER": "MASTER",
@@ -1102,20 +1238,21 @@
                             "NORMAL": "NORMAL",
                             "EASY": "EASY",
                         }
-                    }, headerSort: false},
-                    {title: "Level", field: "playLevel", width: 128, headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction, headerFilterLiveFilter:false, headerSort: false},
-                    {title: "Notes", field: "totalNoteCount", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Condition", field: "condition", headerFilter:"input", headerSort: false, formatter: conditionFormatter},
-                    {title: "Score", field: "score", editor:"number", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerSort: false},
-                    {title: "Time", field: "createdAt", headerFilter:dateFilterEditor, headerFilterFunc:dateFilterFunction, formatter: function(cell) {
+                    }, headerFilterLiveFilter: false},
+                    {title: "Level", field: "playLevel", width: 100, headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction, headerFilterLiveFilter: false},
+                    {title: "Notes", field: "totalNoteCount", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Condition", field: "condition", headerFilter:"input", formatter: conditionFormatter, headerFilterLiveFilter: false},
+                    {title: "Rank", field: "point", width: 64, headerFilter:"number", headerFilterFunc:rankFilterFunction, headerFilterPlaceholder:"Top", headerFilterLiveFilter: false},
+                    {title: "Score", field: "score", editor:"number", headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Combo", field: "combo", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Perfect", field: "perfect", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Great", field: "great", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Good", field: "good", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Bad", field: "bad", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Miss", field: "miss", editor:"number", cellEdited: editComboHandler, headerFilter:"number", headerFilterPlaceholder:"at least...", headerFilterFunc:">=", headerFilterLiveFilter: false},
+                    {title: "Time", field: "createdAt", width: 100, headerFilter:dateFilterEditor, headerFilterFunc:dateFilterFunction, formatter: function(cell) {
                         return setDateFormat(new Date(cell.getValue()));
-                    }, headerSort: false,},
+                    }, headerFilterLiveFilter: false}
                 ]
             });
         }
@@ -1269,7 +1406,7 @@
             }
             function prevMusic() {
                 if (i > 0) {
-                    if (result.length > 0 && list[i].title === result[result.length - 1].title) {
+                    if (result.length > 0) {
                         result.pop();
                     }
                     clearHighlight();
@@ -1445,14 +1582,14 @@
         function downloadHandler() {
             startEvent();
             if (recordTabulator) {
-                const data = recordTabulator.getData().map(function(item) {
-                    return convertToRecord(item);
-                }).sort(function(a, b) {
+                const data = recordTabulator.getData().sort(function(a, b) {
                     if (a.createdAt !== b.createdAt) {
                         return a.createdAt - b.createdAt;
                     } else {
                         return a.seq - b.seq;
                     }
+                }).map(function(item) {
+                    return convertToRecord(item);
                 });
 
                 // check values
@@ -1486,20 +1623,7 @@
         }
 
         function downloadToCSV(data) {
-            var header = [
-                "mid",
-                "mdid",
-                "score",
-                "combo",
-                "perfect",
-                "great",
-                "good",
-                "bad",
-                "miss",
-                "createdAt",
-                "updatedAt",
-            ];
-            var csv = new CSV(data, { header: header}).encode();
+            var csv = new CSV(data).encode();
             var element = document.createElement('a');
             element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
             element.setAttribute('download', "pjsk-recorder-"+Date.now());
@@ -1524,11 +1648,11 @@
 
         function readCSV(file) {
             return new Promise(function(resolve, reject) {
+                const header = ["mid","mdid","score","combo","perfect","great","good","bad","miss","createdAt","updatedAt",];
+                const cast = ["Number","Number","Number","Number","Number","Number","Number","Number","Number","Number","Number"];
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const data = new CSV(e.target.result, {
-                        header: true
-                    }).parse();
+                    const data = new CSV(e.target.result, {header: header, cast: cast}).parse();
                     resolve(data);
                 }
                 reader.onerror = function(err) {
@@ -1538,22 +1662,14 @@
             });
         }
 
-        function resetRecordTable() {
-            clearRecordTableFilter();
-            clearRecordTableSorting();
-        }
-
-        function resetHandler() {
-            resetRecordTable();
-        }
-
         uploadImagesInput.addEventListener("change", uploadImagesHandler);
         uploadCSVInput.addEventListener("change", uploadCSVHandler);
         selectionReadButton.addEventListener("click", readHandler);
         selectionSaveButton.addEventListener("click", saveHandler);
         manualButton.addEventListener("click", startManualInitialize);
         downloadButton.addEventListener("click", downloadHandler);
-        resetButton.addEventListener("click", resetHandler);
+        resetFilterButton.addEventListener("click", clearRecordTableFilter);
+        resetSortButton.addEventListener("click", clearRecordTableSorting);
 
         // 
         // chart
@@ -1581,62 +1697,6 @@
             // });
 
             let drawnChart;
-
-            function getPoint(data) {
-                // Project SEKAI Championship 2023 Spring rules
-                const {combo, perfect, great, good, bad, miss} = data;
-                // let point = 0;
-                // point += perfect * 3;
-                // point += great * 2;
-                // point += good * 1;
-                // point += bad * 0;
-                // point += miss * 0;
-                return perfect * 3 + great * 2 + good * 1;
-            }
-            function getMaxPoint(data) {
-                // Project SEKAI Championship 2023 Spring rules
-                return data.totalNoteCount * 3;
-            }
-            function getComboRate(data) {
-                return data.combo / data.totalNoteCount;
-            }
-            function getPerfectRate(data) {
-                return data.perfect / data.totalNoteCount;
-            }
-            function getGreatRate(data) {
-                return data.bad / data.totalNoteCount;
-            }
-            function getGoodRate(data) {
-                return data.good / data.totalNoteCount;
-            }
-            function getBadRate(data) {
-                return data.bad / data.totalNoteCount;
-            }
-            function getMissRate(data) {
-                return data.miss / data.totalNoteCount;
-            }
-            function getCompletenessRate(data) {
-                return getPoint(data) / getMaxPoint(data);
-            }
-            function compareRowData(a, b) {
-                if (a.mdid !== b.mdid) {
-                    return Math.sign(b.mdid - a.mdid);
-                } else if (a.completenessRate !== b.completenessRate) {
-                    return Math.sign(b.completenessRate - a.completenessRate);
-                } else if (a.perfectRate !== b.perfectRate) {
-                    return Math.sign(b.perfectRate - a.perfectRate);
-                } else if (a.greatRate !== b.greatRate) {
-                    return Math.sign(b.greatRate - a.greatRate);
-                } else if (a.goodRate !== b.goodRate) {
-                    return Math.sign(b.goodRate - a.goodRate);
-                } else if (a.badRate !== b.badRate) {
-                    return Math.sign(b.badRate - a.badRate);
-                } else if (a.missRate !== b.missRate) {
-                    return Math.sign(b.missRate - a.missRate);
-                } else {
-                    return Math.sign(a.createdAt - b.createdAt);
-                }
-            }
 
             function getFilteredMusicDiffs() {
                 const levelFilter = recordTabulator.getFilters(true).find(function(item) {
@@ -1683,16 +1743,9 @@
                     const group = row.getGroup().getKey();
                     return Object.assign(data, {
                         group: group,
-                        maxPoint: getMaxPoint(data),
-                        point: getPoint(data),
-                        comboRate: getComboRate(data),
-                        perfectRate: getPerfectRate(data),
-                        greatRate: getGreatRate(data),
-                        goodRate: getGoodRate(data),
-                        badRate: getBadRate(data),
-                        missRate: getMissRate(data),
-                        completenessRate: getCompletenessRate(data),
                     });
+                }).sort(function(a, b) {
+                    return compareData(a, b);
                 });
             }
             function getUniqueData() {
@@ -1701,59 +1754,68 @@
                     const group = row.getGroup().getKey();
                     return Object.assign(data, {
                         group: group,
-                        maxPoint: getMaxPoint(data),
-                        point: getPoint(data),
-                        comboRate: getComboRate(data),
-                        perfectRate: getPerfectRate(data),
-                        greatRate: getGreatRate(data),
-                        goodRate: getGoodRate(data),
-                        badRate: getBadRate(data),
-                        missRate: getMissRate(data),
-                        completenessRate: getCompletenessRate(data),
                     });
                 }).reduce(function(prev, curr) {
                     const i = prev.findIndex(function(item) {
                         return item.mid === curr.mid;
                     });
                     if (i > -1) {
-                        if (compareRowData(prev[i], curr) > 0) {
+                        if (compareData(prev[i], curr) > 0) {
                             prev[i] = curr;
                         }
                     } else {
                         prev.push(curr);
                     }
                     return prev;
-                }, []);
+                }, []).sort(function(a, b) {
+                    return compareData(a, b);
+                });
             }
             function getUniqueDiffData() {
                 return recordTabulator.getRows("active").map(function(row) {
                     const data = convertToData(row.getData());
                     const group = row.getGroup().getKey();
                     return Object.assign(data, {
-                        group: group,
-                        maxPoint: getMaxPoint(data),
-                        point: getPoint(data),
-                        comboRate: getComboRate(data),
-                        perfectRate: getPerfectRate(data),
-                        greatRate: getGreatRate(data),
-                        goodRate: getGoodRate(data),
-                        badRate: getBadRate(data),
-                        missRate: getMissRate(data),
-                        completenessRate: getCompletenessRate(data),
+                        group: group
                     });
                 }).reduce(function(prev, curr) {
                     const i = prev.findIndex(function(item) {
                         return item.mdid === curr.mdid;
                     });
                     if (i > -1) {
-                        if (compareRowData(prev[i], curr) > 0) {
+                        if (compareData(prev[i], curr) > 0) {
                             prev[i] = curr;
                         }
                     } else {
                         prev.push(curr);
                     }
                     return prev;
-                }, []);
+                }, []).sort(function(a, b) {
+                    return compareData(a, b);
+                });
+            }
+            function getUniqueSortedData() {
+                return recordTabulator.getRows("active").map(function(row) {
+                    const data = convertToData(row.getData());
+                    const group = row.getGroup().getKey();
+                    return Object.assign(data, {
+                        group: group,
+                    });
+                }).reduce(function(prev, curr) {
+                    const i = prev.findIndex(function(item) {
+                        return item.mid === curr.mid;
+                    });
+                    if (i > -1) {
+                        if (compareData(prev[i], curr) > 0) {
+                            prev[i] = curr;
+                        }
+                    } else {
+                        prev.push(curr);
+                    }
+                    return prev;
+                }, []).sort(function(a, b) {
+                    return compareData(a, b);
+                });
             }
             
             // 
@@ -1773,7 +1835,9 @@
                         data: value,
                     });
                     return prev;
-                }, []);
+                }, []).sort(function(a, b) {
+                    return new Date(a.group).getTime() - new Date(b.group).getTime()
+                });
             }
             function getUniqueGroupData() {
                 return Object.entries(getUniqueData().reduce(function(prev, curr) {
@@ -1788,7 +1852,9 @@
                         data: value,
                     });
                     return prev;
-                }, []);
+                }, []).sort(function(a, b) {
+                    return new Date(a.group).getTime() - new Date(b.group).getTime()
+                });
             }
             function getUniqueDiffGroupData() {
                 return Object.entries(getUniqueDiffData().reduce(function(prev, curr) {
@@ -1803,7 +1869,9 @@
                         data: value,
                     });
                     return prev;
-                }, []);
+                }, []).sort(function(a, b) {
+                    return new Date(a.group).getTime() - new Date(b.group).getTime()
+                });
             }
 
             // 
@@ -1811,49 +1879,34 @@
             // 
 
             function getAccumulatedGroupData() {
-                return getGroupData().reduce(function(prev, curr, index, array) {
-                    const data = array.filter(function(item) {
-                        return new Date(item.group).getTime() <= new Date(curr.group).getTime();
-                    }).map(function(item) {
-                        return item.data;
-                    }).reduce(function(_prev, _curr) {
-                        return _prev.concat(_curr);
-                    }, []);
+                return getGroupData().reduce(function(prev, curr, index, data) {
                     prev.push({
                         group: curr.group,
-                        data: data
+                        data: data.slice(0, index + 1).reduce(function(_prev, _curr) {
+                            return _prev.concat(_curr.data);
+                        }, [])
                     });
                     return prev;
                 }, []);
             }
             function getAccumulatedUniqueGroupData() {
-                return getUniqueGroupData().reduce(function(prev, curr, index, array) {
-                    const data = array.filter(function(item) {
-                        return new Date(item.group).getTime() <= new Date(curr.group).getTime();
-                    }).map(function(item) {
-                        return item.data;
-                    }).reduce(function(_prev, _curr) {
-                        return _prev.concat(_curr);
-                    }, []);
+                return getUniqueGroupData().reduce(function(prev, curr, index, data) {
                     prev.push({
                         group: curr.group,
-                        data: data
+                        data: data.slice(0, index + 1).reduce(function(_prev, _curr) {
+                            return _prev.concat(_curr.data);
+                        }, [])
                     });
                     return prev;
                 }, []);
             }
             function getAccumulatedUniqueDiffGroupData() {
-                return getUniqueDiffGroupData().reduce(function(prev, curr, index, array) {
-                    const data = array.filter(function(item) {
-                        return new Date(item.group).getTime() <= new Date(curr.group).getTime();
-                    }).map(function(item) {
-                        return item.data;
-                    }).reduce(function(_prev, _curr) {
-                        return _prev.concat(_curr);
-                    }, []);
+                return getUniqueDiffGroupData().reduce(function(prev, curr, index, data) {
                     prev.push({
                         group: curr.group,
-                        data: data
+                        data: data.slice(0, index + 1).reduce(function(_prev, _curr) {
+                            return _prev.concat(_curr.data);
+                        }, [])
                     });
                     return prev;
                 }, []);
@@ -1909,6 +1962,9 @@
                         datasets: datasets,
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         scales: {
                             x: {
                                 display: false
@@ -1952,6 +2008,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         interaction: {
                             intersect: false,
                             mode: 'nearest',
@@ -1968,7 +2027,7 @@
                 )
             }
 
-            function drawCompletenessRateChart() {
+            function drawCompletenessChart() {
                 const data = getAccumulatedUniqueDiffGroupData();
                 const max = getFilteredMusicDiffsPoint();
                 const labels = data.map(x => x.group);
@@ -1999,6 +2058,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         interaction: {
                             intersect: false,
                             mode: 'nearest',
@@ -2041,6 +2103,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         plugins: {
                             legend: {
                                 display: false
@@ -2088,7 +2153,7 @@
                         }
                     }),
                     backgroundColor: colors,
-                    hoverOffset: 64,
+                    hoverOffset: 32,
                     borderWidth: 0,
                 }]
 
@@ -2099,6 +2164,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         responsive: true,
                         maintainAspectRatio: false,
                     }
@@ -2135,6 +2203,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         scales: {
                             x: {
                                 display: false
@@ -2181,6 +2252,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         scales: {
                             x: {
                                 display: false
@@ -2227,6 +2301,9 @@
                         datasets: datasets
                     },
                     {
+                        animation: {
+                            duration: 0
+                        },
                         scales: {
                             x: {
                                 display: false
@@ -2243,45 +2320,190 @@
                 )
             }
 
-            
-            // 
-            // animation
-            // 
-
-            function getLineAnimation(data, delay) {
-                const totalDuration = delay || 10000;
-                const delayBetweenPoints = totalDuration / data.length;
-                const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(100) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
-                return {
-                    x: {
-                        type: 'number',
-                        easing: 'linear',
-                        duration: delayBetweenPoints,
-                        from: NaN, // the point is initially skipped
-                        delay(ctx) {
-                        if (ctx.type !== 'data' || ctx.xStarted) {
-                            return 0;
-                        }
-                        ctx.xStarted = true;
-                        return ctx.index * delayBetweenPoints;
-                        }
-                    },
-                    y: {
-                        type: 'number',
-                        easing: 'linear',
-                        duration: delayBetweenPoints,
-                        from: previousY,
-                        delay(ctx) {
-                        if (ctx.type !== 'data' || ctx.yStarted) {
-                            return 0;
-                        }
-                        ctx.yStarted = true;
-                        return ctx.index * delayBetweenPoints;
-                        }
+            function drawCountTopChart(n) {
+                const data = Object.entries(getUniqueSortedData().slice(0, n).reduce(function(prev, curr) {
+                    if (!prev[curr.playLevel]) {
+                        prev[curr.playLevel] = [];
                     }
-                };
+                    prev[curr.playLevel].push(curr);
+                    return prev;
+                }, {})).reduce(function(prev, curr) {
+                    prev.push({
+                        index: curr[0],
+                        label: curr[0] + " Lv",
+                        data: curr[1]
+                    });
+                    return prev;
+                }, []).sort(function(a, b) {
+                    return a.index - b.index;
+                });
+                
+                data.push({
+                    index: 99,
+                    label: "Total",
+                    data: data.reduce(function(prev, curr) {
+                        return prev.concat(curr.data);
+                    }, [])
+                });
+
+                const labels = data.map(x => x.label);
+                const datasets = [{
+                    label: "Count",
+                    data: data.map(function(item) {
+                        return item.data.length;
+                    })
+                }];
+                
+                drawChart(
+                    "bar",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        animation: {
+                            duration: 0
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            },
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                    },
+                )
             }
 
+            function drawPointTopChart(n) {
+                const data = Object.entries(getUniqueSortedData().slice(0, n).reduce(function(prev, curr) {
+                    if (!prev[curr.playLevel]) {
+                        prev[curr.playLevel] = [];
+                    }
+                    prev[curr.playLevel].push(curr);
+                    return prev;
+                }, {})).reduce(function(prev, curr) {
+                    prev.push({
+                        index: curr[0],
+                        label: curr[0] + " Lv",
+                        data: curr[1]
+                    });
+                    return prev;
+                }, []).sort(function(a, b) {
+                    return a.index - b.index;
+                });
+                
+                data.push({
+                    index: 99,
+                    label: "Total",
+                    data: data.reduce(function(prev, curr) {
+                        return prev.concat(curr.data);
+                    }, [])
+                });
+
+                const labels = data.map(x => x.label);
+                const datasets = [{
+                    label: "Point",
+                    data: data.map(function(item) {
+                        return item.data.reduce(function(prev, curr) {
+                            return prev + curr.point;
+                        }, 0);
+                    })
+                }];
+                
+                drawChart(
+                    "bar",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        animation: {
+                            duration: 0
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            },
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                    },
+                )
+            }
+
+            function drawCompletenessTopChart(n) {
+                const data = Object.entries(getUniqueSortedData().slice(0, n).reduce(function(prev, curr) {
+                    if (!prev[curr.playLevel]) {
+                        prev[curr.playLevel] = [];
+                    }
+                    prev[curr.playLevel].push(curr);
+                    return prev;
+                }, {})).reduce(function(prev, curr) {
+                    prev.push({
+                        index: curr[0],
+                        label: curr[0] + " Lv",
+                        data: curr[1]
+                    });
+                    return prev;
+                }, []).sort(function(a, b) {
+                    return a.index - b.index;
+                });
+                
+                data.push({
+                    index: 99,
+                    label: "Total",
+                    data: data.reduce(function(prev, curr) {
+                        return prev.concat(curr.data);
+                    }, [])
+                });
+
+                const labels = data.map(x => x.label);
+                const datasets = [{
+                    label: "Completeness",
+                    data: data.map(function(item) {
+                        return item.data.reduce(function(prev, curr) {
+                            return Math.floor((prev + curr.completeness * 100) * 0.5);
+                        }, 100);
+                    })
+                }];
+                
+                drawChart(
+                    "bar",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        animation: {
+                            duration: 0
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            },
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                    },
+                )
+            }
+            
             // 
             // handler
             // 
@@ -2303,23 +2525,157 @@
                     }
                 }
 
-                switch(type) {
-                    case "play-count": drawPlayCountChart(); break;
-                    case "play-count-acc": drawPlayCountAccChart(true); break;
-                    case "completeness": drawCompletenessRateChart(); break; // by point
-                    case "clear-count": drawClearCountChart(); break;
-                    case "clear-condition-count": drawClearConditionCountChart(); break;
-                    case "combo-count": drawComboCountChart(); break;
-                    case "condition-count": drawConditionCountChart(); break;
-                    case "condition-count-acc": drawConditionCountAccChart(); break;
+                try {
+                    switch(type) {
+                        case "play-count": drawPlayCountChart(); break;
+                        case "play-count-acc": drawPlayCountAccChart(true); break;
+                        case "completeness": drawCompletenessChart(); break; // by point
+                        case "clear-count": drawClearCountChart(); break;
+                        case "clear-condition-count": drawClearConditionCountChart(); break;
+                        case "combo-count": drawComboCountChart(); break;
+                        case "condition-count": drawConditionCountChart(); break;
+                        case "condition-count-acc": drawConditionCountAccChart(); break;
+                        case "count-top-10": drawCountTopChart(10); break;
+                        case "count-top-20": drawCountTopChart(20); break;
+                        case "count-top-30": drawCountTopChart(30); break;
+                        case "count-top-40": drawCountTopChart(40); break;
+                        case "count-top-50": drawCountTopChart(50); break;
+                        case "point-top-10": drawPointTopChart(10); break;
+                        case "point-top-20": drawPointTopChart(20); break;
+                        case "point-top-30": drawPointTopChart(30); break;
+                        case "point-top-40": drawPointTopChart(40); break;
+                        case "point-top-50": drawPointTopChart(50); break;
+                        case "completeness-top-10": drawCompletenessTopChart(10); break;
+                        case "completeness-top-20": drawCompletenessTopChart(20); break;
+                        case "completeness-top-30": drawCompletenessTopChart(30); break;
+                        case "completeness-top-40": drawCompletenessTopChart(40); break;
+                        case "completeness-top-50": drawCompletenessTopChart(50); break;
+                    }
+                } catch(err) {
+                    console.error(err)
                 }
 
+                window.scrollTo(0, document.body.scrollHeight);
                 endEvent();
-
-                window.scrollTo(0, document.body.scrollHeight   );
             }
 
             chartDrawButton.addEventListener("click", chartDrawHandler);
+        })();
+
+        // 
+        // debugger
+        // 
+        
+        (function() {
+            const diffs = ["master", "expert", "hard", "normal", "easy"];
+            const conds = ["ap", "fc", "lc"];
+            const dayDiff = 86400000;
+
+            function randomItem(data) {
+                return data[Math.floor(Math.random() * data.length)];
+            }
+            function randomIndex(min, max) {
+                return Math.floor(Math.random() * (max - min) + min);
+            }
+            function randomDate(start, end) {
+                return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            }
+            function generateCombo(totalNoteCount) {
+                const cond = randomIndex(0, 10);
+                let count = totalNoteCount;
+                let combo = 0;
+                let perfect = 0;
+                let great = 0;
+                let good = 0;
+                let bad = 0;
+                let miss = 0;
+
+                switch(cond) {
+                    case 0:
+                    case 1:
+                        // ap
+                        perfect = count;
+                        combo = count;
+                        break;
+                    case 2:
+                    case 3:
+                    case 4:
+                        combo = count;
+                        perfect = randomIndex(0, count);
+                        count -= perfect;
+                        great = count;
+                        // fc
+                        break;
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+                        miss = randomIndex(0, 33);
+                        count -= miss;
+                        bad = randomIndex(0, 66);
+                        count -= bad;
+                        good = randomIndex(0, count);
+                        count -= good;
+                        great = randomIndex(0, count);
+                        count -= great;
+                        perfect = count
+                        combo = randomIndex(0, perfect + great);
+                        // lc
+                        break;
+                }
+
+                return {
+                    combo,
+                    perfect,
+                    great,
+                    good,
+                    bad,
+                    miss,
+                }
+            }
+            function generateRecord() {
+                const music = randomItem(musics);
+                const diff = randomItem(diffs);
+                const musicDiff = musicDifficulties.find(function(item) {
+                    return item.musicId === music.id && item.musicDifficulty === diff;
+                });
+
+                const score = randomIndex(0, 1000000);
+                
+                const {combo,perfect,great,good,bad,miss} = generateCombo(musicDiff.totalNoteCount);
+                const now = new Date();
+                const minDate = new Date(now.getTime() - dayDiff * 365);
+
+                const createdAt = randomDate(minDate, now);
+
+                return {
+                    mid: music.id,
+                    mdid: musicDiff.id,
+                    score: score,
+                    combo: combo,
+                    perfect: perfect,
+                    great: great,
+                    good: good,
+                    bad: bad,
+                    miss: miss,
+                    createdAt: createdAt,
+                    updatedAt: now.getTime()
+                }
+            }
+
+            function generateDummies(n) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    data.push(generateRecord());
+                }
+
+                renderRecordTable(data);
+                hideInitContainer();
+                showRecordContainer();
+            }
+
+            generateDummies(1000);
         })();
         
     </script>
