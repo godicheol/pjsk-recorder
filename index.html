@@ -2099,12 +2099,13 @@
                 const maxLen = musics.length;
                 const labels = data.map(x => x.group);
                 const datasets = [{
+                    label: "Count",
                     data: data.map(function(item) {
                         return item.data.length;
                     }),
                     fill: true,
-                    borderColor: "#9400D3",
-                    pointBackgroundColor: "#9400D3",
+                    borderColor: "#272727",
+                    pointBackgroundColor: "#272727",
                     tension: 0,
                     radius: 0,
                 }];
@@ -2118,11 +2119,6 @@
                     {
                         animation: {
                             duration: 0
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
                         },
                         interaction: {
                             intersect: false,
