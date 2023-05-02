@@ -119,27 +119,6 @@
 
         <div id="record-table"></div>
 
-        <!-- chart -->
-        <div id="chart-container">
-            <h3>Chart</h3>
-            <div>
-                <!-- chart type -->
-                <select id="chart-draw-type">
-                    <option value="play-count">Play Count</option>
-                    <option value="play-count-acc">Accumulated Play Count</option>
-                    <option value="completeness">Completeness</option>
-                    <option value="clear-count">Cleared Music Count</option>
-                    <option value="combo-count">Combo Count</option>
-                    <option value="condition-count">Condition Count</option>
-                    <option value="condition-count-acc">Accumulated Condition Count</option>
-                </select>
-                <button id="chart-draw-button" type="button">Draw</button>
-            </div>
-            <div id="chart-wrapper">
-                <canvas id="chart-canvas" width="0" height="0"></canvas>
-            </div>
-        </div>
-
         <!-- addition container -->
         <div id="addition-container">
             <div>
@@ -163,11 +142,38 @@
             </div>
         </div>
 
+        <!-- chart -->
+        <div id="chart-container">
+            <h3>Chart</h3>
+            <div>
+                <!-- chart type -->
+                <select id="chart-draw-type">
+                    <option value="play-count">Play Count</option>
+                    <option value="play-count-acc">Accumulated Play Count</option>
+                    <option value="completeness">Completeness</option>
+                    <option value="clear-count">Cleared Music Count</option>
+                    <option value="combo-count">Combo Count</option>
+                    <option value="condition-count">Condition Count</option>
+                    <option value="condition-count-acc">Accumulated Condition Count</option>
+                </select>
+                <button id="chart-draw-button" type="button">Draw</button>
+            </div>
+            <div id="chart-wrapper">
+                <canvas id="chart-canvas" width="0" height="0"></canvas>
+            </div>
+        </div>
     </div>
 
     <!-- footer -->
-    <div class="fc-15 bc-0 ta-r pr-12 py-12" style="margin: 0 -8px -8px -8px;">
-        <a class="fc-15" href="https://github.com/godicheol/pjsk-recorder/">Git</a>
+    <div class="fc-15 bc-0 ta-r px-12 py-12" style="margin: 0 -8px -8px -8px;">
+        <div class="f-l">
+            <span>Last published:</span>
+            <span id="last-published-music-title"></span>
+        </div>
+        <div class="f-r">
+            <a class="fc-15" href="https://github.com/godicheol/pjsk-recorder/">Git</a>
+        </div>
+        <div class="f-n"></div>
     </div>
 
     <!-- js -->
@@ -214,7 +220,7 @@
         const recordTable = document.querySelector("#record-table");
         const resetButton = document.querySelector("#reset-button");
         const downloadButton = document.querySelector("#download-button");
-
+        
         const TITLE_CHARSET = getTitleCharSet();
         const SCORE_CHARSET = "0123456789";
         const DIFF_CHARSET = "ADEHLMNOPRSTXY";
@@ -227,6 +233,12 @@
         let selectionResult = [];
         let selectionTabulator = null;
         let recordTabulator = null;
+
+        try {
+            document.querySelector("#last-published-music-title").innerHTML = getLastPublishedMusic().title;
+        } catch(err) {
+            console.error(err);
+        }
 
         function getNow() {
             const now = new Date();
@@ -682,6 +694,22 @@
             });
             return difficulty;
         }
+
+        function getLastPublishedMusic() {
+            return musics.reduce(function(prev, curr) {
+                if (prev.publishedAt < curr.publishedAt) {
+                    prev = curr;
+                }
+                return prev;
+            }, {
+                publishedAt: 0
+            });
+        }
+        
+        // 
+        // selection
+        // 
+
         function getCondition(musicDiff, data) {
             const {combo, perfect, great, good, bad, miss} = data;
             const totalNoteCount = musicDiff.totalNoteCount;
@@ -1582,7 +1610,7 @@
                 }
             }
 
-            function getMusicDiffs() {
+            function getFilteredMusicDiffs() {
                 const levelFilter = recordTabulator.getFilters(true).find(function(item) {
                     return item.field === "playLevel";
                 });
@@ -1602,8 +1630,8 @@
                 });
             }
 
-            function getMusicDiffsPoint() {
-                return getMusicDiffs().reduce(function(prev, curr) {
+            function getFilteredMusicDiffsPoint() {
+                return getFilteredMusicDiffs().reduce(function(prev, curr) {
                     const d = curr.musicDifficulty.toUpperCase();
                     const n = curr.totalNoteCount;
                     prev[d] += n * 3;
@@ -1925,7 +1953,7 @@
 
             function drawCompletenessRateChart() {
                 const data = getAccumulatedUniqueDiffGroupData();
-                const max = getMusicDiffsPoint();
+                const max = getFilteredMusicDiffsPoint();
                 const labels = data.map(x => x.group);
                 const datasets = getDiffDatasets(data, function(items, diff) {
                     return Math.round(items.reduce(function(p, c) {
@@ -2075,6 +2103,7 @@
                     case "clear-count": drawClearCountChart(); break;
                     case "combo-count": drawComboCountChart(); break;
                     case "condition-count": drawComboCountChart(); break;
+                    case "condition-count-acc": drawComboCountChart(); break;
                 }
 
                 endEvent();
