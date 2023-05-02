@@ -188,6 +188,7 @@
     <!-- <script src="./src/jquery-ui/jquery-ui.min.js"></script> -->
     <script src="./src/jquery-select-areas/jquery.selectareas.min.js"></script>
     <script src="./src/chartjs/chart.umd.js"></script>
+    <!-- <script src="./src/chartjs-plugin-datalabels/chartjs-plugin-datalabels.min.js"></script> -->
     <script src="./src/csv.min.js"></script>
     <script src="./src/javascript-string.js"></script>
     <script src="./src/musics.js"></script> 
@@ -1563,6 +1564,14 @@
             const chartDrawButton = document.querySelector("#chart-draw-button");
             const chartWrapper = document.querySelector("#chart-wrapper");
             const chartCanvas = document.querySelector("#chart-canvas");
+
+            // Chart.register(ChartDataLabels); // show label value
+
+            // Chart.defaults.set('plugins.datalabels', {
+            //     color: '#000000',
+            //     clamp: true,
+            //     align: "top"
+            // });
 
             // $(function() {
             //     $( "#chart-wrapper" ).resizable({
