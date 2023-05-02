@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>index.html</title>
     <link href="./style.css" rel="stylesheet" type="text/css" />
-    <link href="./src/tabulator/css/tabulator.min.css" rel="stylesheet" type="text/css" />
+    <!-- <link href="./src/jquery-ui/jquery-ui.min.css" rel="stylesheet" type="text/css" /> -->
+    <link href="./src/tabulator/css/tabulator_simple.min.css" rel="stylesheet" type="text/css" />
     <link href="./src/jquery-select-areas/resources/jquery.selectareas.css" media="screen" rel="stylesheet" type="text/css" />
     <style>
         *, *::after, *::before{
@@ -143,24 +144,28 @@
         </div>
 
         <!-- chart -->
-        <div id="chart-container">
-            <h3>Chart</h3>
-            <div>
-                <!-- chart type -->
-                <select id="chart-draw-type">
-                    <option value="play-count">Play Count</option>
-                    <option value="play-count-acc">Accumulated Play Count</option>
-                    <option value="completeness">Completeness</option>
-                    <option value="clear-count">Cleared Music Count</option>
-                    <option value="combo-count">Combo Count</option>
-                    <option value="condition-count">Condition Count</option>
-                    <option value="condition-count-acc">Accumulated Condition Count</option>
-                </select>
-                <button id="chart-draw-button" type="button">Draw</button>
+        <div id="chart-container" class="mb-8">
+                <h3>Chart</h3>
+                <!-- buttons -->
+                <div>
+                    <!-- chart type -->
+                    <select id="chart-draw-type">
+                        <option value="play-count">Play Count</option>
+                        <option value="play-count-acc">Accumulated Play Count</option>
+                        <option value="completeness">Completeness</option>
+                        <option value="clear-count">Cleared Music Count</option>
+                        <option value="clear-condition-count">Cleared Coundition Count</option>
+                        <option value="combo-count">Combo Count</option>
+                        <option value="condition-count">Condition Count</option>
+                        <option value="condition-count-acc">Accumulated Condition Count</option>
+                    </select>
+                    <button id="chart-draw-button" type="button">Draw</button>
+                </div>
+                <div id="chart-wrapper" class="fs-0" style="max-height: 70vh;">
+                    <canvas id="chart-canvas" width="0" height="0"></canvas>
+                </div>
             </div>
-            <div id="chart-wrapper">
-                <canvas id="chart-canvas" width="0" height="0"></canvas>
-            </div>
+            
         </div>
     </div>
 
@@ -180,6 +185,7 @@
     <script src="./src/tesseract.min.js"></script>
     <script src="./src/tabulator/js/tabulator.min.js"></script>
     <script src="./src/jquery.min.js"></script>
+    <!-- <script src="./src/jquery-ui/jquery-ui.min.js"></script> -->
     <script src="./src/jquery-select-areas/jquery.selectareas.min.js"></script>
     <script src="./src/chartjs/chart.umd.js"></script>
     <script src="./src/csv.min.js"></script>
@@ -235,7 +241,8 @@
         let recordTabulator = null;
 
         try {
-            document.querySelector("#last-published-music-title").innerHTML = getLastPublishedMusic().title;
+            const lastMusic = getLastPublishedMusic();
+            document.querySelector("#last-published-music-title").innerHTML = lastMusic.title;
         } catch(err) {
             console.error(err);
         }
@@ -249,6 +256,12 @@
         function parseISOLocal(s) {
             var b = s.split(/\D/);
             return new Date(b[0],b[1]-1,b[2]);
+        }
+
+        function setDateFormat(date) {
+            return date.getFullYear() +
+                '/' + ( (date.getMonth()+1) < 9 ? "0" + (date.getMonth()+1) : (date.getMonth()+1) ) +
+                '/' + ( (date.getDate()) < 9 ? "0" + (date.getDate()) : (date.getDate()) );
         }
 
         function startEvent() {
@@ -272,16 +285,16 @@
                         h: 75 / 1170,
                     },
                     difficulty: {
-                        x: 400 / 2532,
-                        y: 80 / 1170,
-                        w: 200 / 2532,
-                        h: 60 / 1170,
+                        x: 406 / 2532,
+                        y: 83 / 1170,
+                        w: 195 / 2532,
+                        h: 54 / 1170,
                     },
                     score: {
                         x: 300 / 2532,
                         y: 280 / 1170,
-                        w: 620 / 2532,
-                        h: 183 / 1170,
+                        w: 616 / 2532,
+                        h: 178 / 1170,
                     },
                     combo: {
                         x: 440 / 2532,
@@ -291,19 +304,19 @@
                     },
                     perfect: {
                         x: 1170 / 2532,
-                        y: 668 / 1170,
+                        y: 676 / 1170,
                         w: 160 / 2532,
                         h: 60 / 1170,
                     },
                     great: {
                         x: 1170 / 2532,
-                        y: 730 / 1170,
+                        y: 734 / 1170,
                         w: 160 / 2532,
                         h: 60 / 1170,
                     },
                     good: {
                         x: 1170 / 2532,
-                        y: 793 / 1170,
+                        y: 792 / 1170,
                         w: 160 / 2532,
                         h: 60 / 1170,
                     },
@@ -861,8 +874,8 @@
         }
         function createSelectionTabulator() {
             selectionTabulator = new Tabulator("#selection-result-table", {
-                layout: "fitDataStretch",
-                layoutColumnsOnNewData: true,
+                layout: "fitDataFill",
+                renderHorizontal:"virtual",
                 columns: [
                     {title: "Title", field: "title", editor: "list", editorParams: {
                         values: getMusicTitleForEditorParams()
@@ -901,12 +914,6 @@
         // 
         // render records table
         // 
-
-        function setDateFormat(date) {
-            return date.getFullYear() +
-                '/' + ( (date.getMonth()+1) < 9 ? "0" + (date.getMonth()+1) : (date.getMonth()+1) ) +
-                '/' + ( (date.getDate()) < 9 ? "0" + (date.getDate()) : (date.getDate()) );
-        }
 
         function conditionFormatter(cell, formatterParams) {
             const value = cell.getValue();
@@ -1066,8 +1073,9 @@
         
             recordTabulator = new Tabulator("#record-table", {
                 data: _data,
-                layout: "fitDataStretch",
-                layoutColumnsOnNewData: true,
+                height: "70vh",
+                renderHorizontal:"virtual",
+                layout: "fitDataFill",
                 groupBy: function(__data) {
                     return setDateFormat(__data.timestamp);
                 },
@@ -1552,6 +1560,13 @@
             const chartWrapper = document.querySelector("#chart-wrapper");
             const chartCanvas = document.querySelector("#chart-canvas");
 
+            // $(function() {
+            //     $( "#chart-wrapper" ).resizable({
+            //         minWidth: 100,
+            //         minHeight: 100,
+            //     });
+            // });
+
             let drawnChart;
 
             function getPoint(data) {
@@ -1763,7 +1778,7 @@
                 }, []);
             }
             function getUniqueDiffGroupData() {
-                return Object.entries(getUniqueData().reduce(function(prev, curr) {
+                return Object.entries(getUniqueDiffData().reduce(function(prev, curr) {
                     if (!prev[curr.group]) {
                         prev[curr.group] = [];
                     }
@@ -1843,37 +1858,6 @@
                 "EASY": "#32CD32",
             }
 
-            const INTERACTION_NEAREST = {
-                intersect: false,
-                mode: 'nearest',
-                axis: "xy"
-            }
-
-            const SCALES_0_100 = {
-                y: {
-                    min: 0,
-                    max: 100
-                }
-            }
-
-            function getDiffDatasets(data, extractFunc, fill) {
-                return ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(difficulty) {
-                    return {
-                        label: difficulty,
-                        data: data.map(function(item) {
-                            const filtered = item.data.filter(function(_item) {
-                                return _item.difficulty === difficulty;
-                            });
-                            return extractFunc(filtered, difficulty);
-                        }),
-                        fill: false,
-                        borderColor: DIFFICULTY_COLORS[difficulty],
-                        pointBackgroundColor: DIFFICULTY_COLORS[difficulty],
-                        tension: 0,
-                    }
-                })
-            }
-            
             function drawChart(type, data, options) {
                 drawnChart = new Chart(
                     chartCanvas,
@@ -1897,25 +1881,33 @@
                             });
                             return filtered.length
                         }),
-                        backgroundColor: data.map(function(item) {
-                            return DIFFICULTY_COLORS[difficulty]
-                        }),
+                        fill: false,
+                        borderColor: DIFFICULTY_COLORS[difficulty],
+                        pointBackgroundColor: DIFFICULTY_COLORS[difficulty],
+                        tension: 0,
+                        radius: 0,
                     }
                 })
                 
                 drawChart(
-                    "bar",
+                    "line",
                     {
                         labels: labels, // x
                         datasets: datasets,
-                        backgroundColor: Object.values(DIFFICULTY_COLORS),
                     },
                     {
                         scales: {
-                            y: {
-                                beginAtZero: true,
+                            x: {
+                                display: false
                             }
                         },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
                     },
                 )
             }
@@ -1936,6 +1928,7 @@
                         borderColor: DIFFICULTY_COLORS[difficulty],
                         pointBackgroundColor: DIFFICULTY_COLORS[difficulty],
                         tension: 0,
+                        radius: 0,
                     }
                 })
 
@@ -1946,7 +1939,18 @@
                         datasets: datasets
                     },
                     {
-                        interation: INTERACTION_NEAREST
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        scales: {
+                            x: {
+                                display: false
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
                     },
                 )
             }
@@ -1955,11 +1959,25 @@
                 const data = getAccumulatedUniqueDiffGroupData();
                 const max = getFilteredMusicDiffsPoint();
                 const labels = data.map(x => x.group);
-                const datasets = getDiffDatasets(data, function(items, diff) {
-                    return Math.round(items.reduce(function(p, c) {
-                        return p + c.point;
-                    }, 0) / max[diff] * 10000) / 100;
-                });
+                const datasets = ["MASTER", "EXPERT", "HARD", "NORMAL", "EASY"].map(function(difficulty) {
+                    return {
+                        label: difficulty,
+                        data: data.map(function(item) {
+                            const filtered = item.data.filter(function(_item) {
+                                return _item.difficulty === difficulty;
+                            });
+
+                            return Math.round(filtered.reduce(function(p, c) {
+                                return p + c.point;
+                            }, 0) / max[difficulty] * 10000) / 100;
+                        }),
+                        fill: false,
+                        borderColor: DIFFICULTY_COLORS[difficulty],
+                        pointBackgroundColor: DIFFICULTY_COLORS[difficulty],
+                        tension: 0,
+                        radius: 0,
+                    }
+                })
 
                 drawChart(
                     "line",
@@ -1968,8 +1986,22 @@
                         datasets: datasets
                     },
                     {
-                        interation: INTERACTION_NEAREST,
-                        scales: SCALES_0_100,
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        scales: {
+                            x: {
+                                display: false
+                            },
+                            y: {
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
                     },
                 )
             }
@@ -1979,14 +2011,14 @@
                 const maxLen = musics.length;
                 const labels = data.map(x => x.group);
                 const datasets = [{
-                    label: "Musics",
                     data: data.map(function(item) {
                         return item.data.length;
                     }),
-                    fill: false,
+                    fill: true,
                     borderColor: "#9400D3",
                     pointBackgroundColor: "#9400D3",
                     tension: 0,
+                    radius: 0,
                 }];
 
                 drawChart(
@@ -1996,27 +2028,80 @@
                         datasets: datasets
                     },
                     {
-                        interation: INTERACTION_NEAREST,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
                         scales: {
+                            x: {
+                                display: false
+                            },
                             y: {
                                 min: 0,
                                 max: maxLen
                             }
-                        }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
                     },
+                )
+            }
+
+            function drawClearConditionCountChart() {
+                const data = getUniqueData();
+                const maxLen = musics.length;
+                let clearedLen = 0;
+                const labels = ["ALL PERFECT", "FULL COMBO", "LIVE CLEAR", "NOT PLAYED"];
+                const colors = ["#9400D3", "#ffa9cc", "#d4a3b7", "#bbbbbb"];
+                const datasets = [{
+                    label: "Musics",
+                    data: labels.map(function(cond, i) {
+                        if (i < labels.length - 1) {
+                            const filtered = data.filter(function(item) {
+                                return item.condition === cond;
+                            });
+
+                            clearedLen += filtered.length;
+
+                            return filtered.length;
+                        } else {
+                            return maxLen - clearedLen;
+                        }
+                    }),
+                    backgroundColor: colors,
+                    hoverOffset: 64,
+                    borderWidth: 0,
+                }]
+
+                drawChart(
+                    "pie",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                    }
                 )
             }
 
             function drawComboCountChart() {
-                const data = getGroupData().slice(1);
+                const data = getGroupData();
                 const types = ["perfect", "great", "good", "bad", "miss"];
-                const colors = ["#9400D3", "#DC143C", "#32CD32", "#00CED1", "#777777"];
+                const colors = ["#9400D3", "#DC143C", "#32CD32", "#00CED1", "#bbbbbb"];
                 const labels = data.map(x => x.group);
                 const datasets = types.map(function(type, i) {
                     const color = colors[i];
-                    const lable = type.toUpperCase();
+                    const label = type.toUpperCase();
                     return {
-                        label: lable,
+                        label: label,
                         data: data.map(function(item) {
                             return item.data.reduce(function(p, c) {
                                 return p + c[type];
@@ -2026,6 +2111,7 @@
                         borderColor: color,
                         pointBackgroundColor: color,
                         tension: 0,
+                        radius: 0,
                     }
                 });
                 
@@ -2036,30 +2122,42 @@
                         datasets: datasets
                     },
                     {
-                        interation: INTERACTION_NEAREST,
+                        scales: {
+                            x: {
+                                display: false
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
                     },
                 )
             }
 
-            function drawConditionCount() {
-                const data = getGroupData().slice(1);
+            function drawConditionCountChart() {
+                const data = getGroupData();
                 const types = ["ALL PERFECT", "FULL COMBO", "LIVE CLEAR"];
-                const colors = ["#9400D3", "#ffa9cc", "#777777"];
+                const colors = ["#9400D3", "#ffa9cc", "#bbbbbb"];
                 const labels = data.map(x => x.group);
                 const datasets = types.map(function(type, i) {
                     const color = colors[i];
-                    const lable = type.toUpperCase();
+                    const label = type.toUpperCase();
                     return {
-                        label: lable,
+                        label: label,
                         data: data.map(function(item) {
-                            return item.data.reduce(function(p, c) {
-                                return p + c[type];
-                            }, 0);
+                            return item.data.filter(function(_item) {
+                                return _item.condition === type;
+                            }).length;
                         }),
                         fill: false,
                         borderColor: color,
                         pointBackgroundColor: color,
                         tension: 0,
+                        radius: 0,
                     }
                 });
                 
@@ -2070,9 +2168,105 @@
                         datasets: datasets
                     },
                     {
-                        interation: INTERACTION_NEAREST,
+                        scales: {
+                            x: {
+                                display: false
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
                     },
                 )
+            }
+
+            function drawConditionCountAccChart() {
+                const data = getAccumulatedGroupData();
+                const types = ["ALL PERFECT", "FULL COMBO", "LIVE CLEAR"];
+                const colors = ["#9400D3", "#ffa9cc", "#bbbbbb"];
+                const labels = data.map(x => x.group);
+                const datasets = types.map(function(type, i) {
+                    const color = colors[i];
+                    const label = type.toUpperCase();
+                    return {
+                        label: label,
+                        data: data.map(function(item) {
+                            return item.data.filter(function(_item) {
+                                return _item.condition === type;
+                            }).length;
+                        }),
+                        fill: false,
+                        borderColor: color,
+                        pointBackgroundColor: color,
+                        tension: 0,
+                        radius: 0,
+                    }
+                });
+                
+                drawChart(
+                    "line",
+                    {
+                        labels: labels, // x
+                        datasets: datasets
+                    },
+                    {
+                        scales: {
+                            x: {
+                                display: false
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest',
+                            axis: "xy"
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                    },
+                )
+            }
+
+            
+            // 
+            // animation
+            // 
+
+            function getLineAnimation(data, delay) {
+                const totalDuration = delay || 10000;
+                const delayBetweenPoints = totalDuration / data.length;
+                const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(100) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
+                return {
+                    x: {
+                        type: 'number',
+                        easing: 'linear',
+                        duration: delayBetweenPoints,
+                        from: NaN, // the point is initially skipped
+                        delay(ctx) {
+                        if (ctx.type !== 'data' || ctx.xStarted) {
+                            return 0;
+                        }
+                        ctx.xStarted = true;
+                        return ctx.index * delayBetweenPoints;
+                        }
+                    },
+                    y: {
+                        type: 'number',
+                        easing: 'linear',
+                        duration: delayBetweenPoints,
+                        from: previousY,
+                        delay(ctx) {
+                        if (ctx.type !== 'data' || ctx.yStarted) {
+                            return 0;
+                        }
+                        ctx.yStarted = true;
+                        return ctx.index * delayBetweenPoints;
+                        }
+                    }
+                };
             }
 
             // 
@@ -2101,12 +2295,15 @@
                     case "play-count-acc": drawPlayCountAccChart(true); break;
                     case "completeness": drawCompletenessRateChart(); break; // by point
                     case "clear-count": drawClearCountChart(); break;
+                    case "clear-condition-count": drawClearConditionCountChart(); break;
                     case "combo-count": drawComboCountChart(); break;
-                    case "condition-count": drawComboCountChart(); break;
-                    case "condition-count-acc": drawComboCountChart(); break;
+                    case "condition-count": drawConditionCountChart(); break;
+                    case "condition-count-acc": drawConditionCountAccChart(); break;
                 }
 
                 endEvent();
+
+                window.scrollTo(0, document.body.scrollHeight   );
             }
 
             chartDrawButton.addEventListener("click", chartDrawHandler);
